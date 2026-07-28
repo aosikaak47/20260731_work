@@ -1,0 +1,63 @@
+{
+  "general": {
+    "platform_name": "智能自动化测试平台",
+    "version": "3.0.0",
+    "description": "企业级智能性能测试与自动化测试平台",
+    "logo_url": "",
+    "language": "zh-CN",
+    "timezone": "Asia/Shanghai"
+  },
+  "performance": {
+    "default_engine": "locust",
+    "max_concurrent_tests": 10,
+    "default_timeout": 300,
+    "monitoring_interval": 5,
+    "data_retention_days": 90,
+    "auto_cleanup": true,
+    "metrics_storage": "influxdb"
+  },
+  "ai": {
+    "enable_ai_analysis": true,
+    "auto_bottleneck_detection": true,
+    "auto_anomaly_detection": true,
+    "auto_scenario_generation": false,
+    "model_update_interval": 7,
+    "confidence_threshold": 0.85
+  },
+  "alerts": {
+    "enable_email_alert": true,
+    "enable_webhook_alert": true,
+    "alert_recipients": ["admin@test.com"],
+    "webhook_url": "",
+    "alert_rules": [
+      {"metric": "error_rate", "threshold": 5, "operator": ">", "severity": "critical"},
+      {"metric": "response_time", "threshold": 2000, "operator": ">", "severity": "warning"},
+      {"metric": "cpu_usage", "threshold": 80, "operator": ">", "severity": "warning"}
+    ]
+  },
+  "integrations": {
+    "jira": {"enabled": false, "url": "", "token": ""},
+    "slack": {"enabled": false, "webhook": ""},
+    "grafana": {"enabled": true, "url": "http://localhost:3000", "dashboard": "perf-dashboard"},
+    "prometheus": {"enabled": true, "url": "http://localhost:9090"}
+  },
+  "security": {
+    "session_timeout": 30,
+    "max_login_attempts": 5,
+    "password_policy": {
+      "min_length": 8,
+      "require_uppercase": true,
+      "require_lowercase": true,
+      "require_digit": true,
+      "require_special": false
+    },
+    "ip_whitelist": [],
+    "audit_log": true
+  },
+  " scalability": {
+    "max_projects": 100,
+    "max_users_per_project": 50,
+    "max_test_cases": 10000,
+    "max_concurrent_users": 5000
+  }
+}

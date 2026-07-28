@@ -1,0 +1,648 @@
+[
+  {
+    "id": "pr_001",
+    "test_id": "pt_001",
+    "test_name": "登录接口压测",
+    "status": "completed",
+    "start_time": "2026-07-23 14:00:00",
+    "end_time": "2026-07-23 14:05:00",
+    "duration": 300,
+    "concurrency": 100,
+    "summary": {
+      "total_requests": 28560,
+      "success_requests": 28120,
+      "failed_requests": 440,
+      "error_rate": 1.54,
+      "avg_response_time": 156.3,
+      "min_response_time": 12,
+      "max_response_time": 2450,
+      "p90_response_time": 280,
+      "p95_response_time": 420,
+      "p99_response_time": 1850,
+      "tps": 95.2,
+      "qps": 95.2,
+      "avg_cpu": 45.2,
+      "max_cpu": 78.5,
+      "avg_memory": 62.3,
+      "max_memory": 85.1,
+      "avg_network_in": 12.5,
+      "avg_network_out": 8.3,
+      "concurrent_users": 100
+    },
+    "timeline": [
+      {
+        "timestamp": "2026-07-23 14:00:30",
+        "tps": 85,
+        "avg_rt": 120,
+        "error_rate": 0.5,
+        "cpu": 30,
+        "memory": 45
+      },
+      {
+        "timestamp": "2026-07-23 14:01:00",
+        "tps": 92,
+        "avg_rt": 135,
+        "error_rate": 0.8,
+        "cpu": 38,
+        "memory": 52
+      },
+      {
+        "timestamp": "2026-07-23 14:01:30",
+        "tps": 98,
+        "avg_rt": 145,
+        "error_rate": 1.0,
+        "cpu": 45,
+        "memory": 58
+      },
+      {
+        "timestamp": "2026-07-23 14:02:00",
+        "tps": 102,
+        "avg_rt": 158,
+        "error_rate": 1.2,
+        "cpu": 52,
+        "memory": 65
+      },
+      {
+        "timestamp": "2026-07-23 14:02:30",
+        "tps": 105,
+        "avg_rt": 165,
+        "error_rate": 1.5,
+        "cpu": 58,
+        "memory": 70
+      },
+      {
+        "timestamp": "2026-07-23 14:03:00",
+        "tps": 100,
+        "avg_rt": 162,
+        "error_rate": 1.8,
+        "cpu": 65,
+        "memory": 75
+      },
+      {
+        "timestamp": "2026-07-23 14:03:30",
+        "tps": 95,
+        "avg_rt": 170,
+        "error_rate": 2.0,
+        "cpu": 72,
+        "memory": 80
+      },
+      {
+        "timestamp": "2026-07-23 14:04:00",
+        "tps": 90,
+        "avg_rt": 180,
+        "error_rate": 2.2,
+        "cpu": 75,
+        "memory": 82
+      },
+      {
+        "timestamp": "2026-07-23 14:04:30",
+        "tps": 85,
+        "avg_rt": 175,
+        "error_rate": 1.9,
+        "cpu": 70,
+        "memory": 78
+      },
+      {
+        "timestamp": "2026-07-23 14:05:00",
+        "tps": 80,
+        "avg_rt": 168,
+        "error_rate": 1.5,
+        "cpu": 62,
+        "memory": 72
+      }
+    ],
+    "bottlenecks": [
+      {
+        "type": "database",
+        "severity": "high",
+        "description": "数据库连接池耗尽，连接等待时间超过500ms",
+        "metric": "db_pool_wait",
+        "value": 520,
+        "threshold": 200
+      },
+      {
+        "type": "cpu",
+        "severity": "medium",
+        "description": "CPU使用率在300并发时超过75%阈值",
+        "metric": "cpu_usage",
+        "value": 78.5,
+        "threshold": 75
+      }
+    ],
+    "anomalies": [
+      {
+        "timestamp": "2026-07-23 14:03:30",
+        "type": "response_time_spike",
+        "severity": "high",
+        "description": "响应时间突增至2450ms，疑似GC停顿",
+        "value": 2450,
+        "baseline": 156
+      },
+      {
+        "timestamp": "2026-07-23 14:02:00",
+        "type": "error_rate_increase",
+        "severity": "medium",
+        "description": "错误率从0.8%上升至1.2%",
+        "value": 1.2,
+        "baseline": 0.8
+      }
+    ],
+    "ai_analysis": {
+      "bottleneck_type": "数据库连接池",
+      "confidence": 0.92,
+      "root_cause": "连接池大小配置为50，但在100并发下数据库连接请求达到120+，导致连接等待和超时",
+      "suggestions": [
+        "将数据库连接池大小从50调整为150",
+        "启用连接复用和预热机制",
+        "添加数据库读写分离配置"
+      ],
+      "trend_prediction": "如果不优化，在200并发下错误率预计达到8.5%，响应时间超过3000ms"
+    },
+    "created_at": "2026-07-23 14:05:00"
+  },
+  {
+    "id": "pr_002",
+    "test_id": "pt_002",
+    "test_name": "商品搜索压力测试",
+    "status": "running",
+    "start_time": "2026-07-23 15:00:00",
+    "end_time": null,
+    "duration": 180,
+    "concurrency": 50,
+    "summary": {
+      "total_requests": 8200,
+      "success_requests": 8100,
+      "failed_requests": 100,
+      "error_rate": 1.22,
+      "avg_response_time": 89.5,
+      "min_response_time": 8,
+      "max_response_time": 980,
+      "p90_response_time": 150,
+      "p95_response_time": 220,
+      "p99_response_time": 650,
+      "tps": 68.3,
+      "qps": 68.3,
+      "avg_cpu": 32.1,
+      "max_cpu": 55.3,
+      "avg_memory": 48.2,
+      "max_memory": 65.0,
+      "avg_network_in": 8.2,
+      "avg_network_out": 5.5,
+      "concurrent_users": 50
+    },
+    "timeline": [
+      {
+        "timestamp": "2026-07-23 15:00:30",
+        "tps": 60,
+        "avg_rt": 75,
+        "error_rate": 0.3,
+        "cpu": 25,
+        "memory": 40
+      },
+      {
+        "timestamp": "2026-07-23 15:01:00",
+        "tps": 65,
+        "avg_rt": 82,
+        "error_rate": 0.5,
+        "cpu": 30,
+        "memory": 45
+      },
+      {
+        "timestamp": "2026-07-23 15:01:30",
+        "tps": 70,
+        "avg_rt": 90,
+        "error_rate": 0.8,
+        "cpu": 32,
+        "memory": 48
+      },
+      {
+        "timestamp": "2026-07-23 15:02:00",
+        "tps": 68,
+        "avg_rt": 85,
+        "error_rate": 1.2,
+        "cpu": 35,
+        "memory": 50
+      }
+    ],
+    "bottlenecks": [],
+    "anomalies": [],
+    "ai_analysis": null,
+    "created_at": "2026-07-23 15:02:00"
+  },
+  {
+    "id": "pr_003",
+    "test_id": "pt_005",
+    "test_name": "用户查询接口基准测试",
+    "status": "completed",
+    "start_time": "2026-07-18 11:30:00",
+    "end_time": "2026-07-18 11:32:00",
+    "duration": 120,
+    "concurrency": 20,
+    "summary": {
+      "total_requests": 4800,
+      "success_requests": 4800,
+      "failed_requests": 0,
+      "error_rate": 0.0,
+      "avg_response_time": 45.2,
+      "min_response_time": 5,
+      "max_response_time": 320,
+      "p90_response_time": 85,
+      "p95_response_time": 120,
+      "p99_response_time": 280,
+      "tps": 40.0,
+      "qps": 40.0,
+      "avg_cpu": 15.2,
+      "max_cpu": 28.5,
+      "avg_memory": 35.3,
+      "max_memory": 42.1,
+      "avg_network_in": 3.5,
+      "avg_network_out": 2.8,
+      "concurrent_users": 20
+    },
+    "timeline": [
+      {
+        "timestamp": "2026-07-18 11:30:30",
+        "tps": 38,
+        "avg_rt": 40,
+        "error_rate": 0,
+        "cpu": 12,
+        "memory": 32
+      },
+      {
+        "timestamp": "2026-07-18 11:31:00",
+        "tps": 42,
+        "avg_rt": 45,
+        "error_rate": 0,
+        "cpu": 15,
+        "memory": 35
+      },
+      {
+        "timestamp": "2026-07-18 11:31:30",
+        "tps": 41,
+        "avg_rt": 48,
+        "error_rate": 0,
+        "cpu": 18,
+        "memory": 38
+      },
+      {
+        "timestamp": "2026-07-18 11:32:00",
+        "tps": 40,
+        "avg_rt": 47,
+        "error_rate": 0,
+        "cpu": 16,
+        "memory": 36
+      }
+    ],
+    "bottlenecks": [],
+    "anomalies": [],
+    "ai_analysis": {
+      "bottleneck_type": "无显著瓶颈",
+      "confidence": 0.88,
+      "root_cause": "当前并发量下系统表现良好，各项指标正常",
+      "suggestions": [
+        "可以尝试增加并发用户数以找到系统拐点"
+      ],
+      "trend_prediction": "预计在100并发时响应时间将上升至150ms左右"
+    },
+    "created_at": "2026-07-18 11:32:00"
+  },
+  {
+    "id": "pr_001_977",
+    "test_id": "pt_001",
+    "test_name": "登录接口压测",
+    "status": "running",
+    "start_time": "2026-07-24 08:40:31",
+    "end_time": null,
+    "duration": 300,
+    "concurrency": 100,
+    "summary": {
+      "total_requests": 25500,
+      "success_requests": 25071,
+      "failed_requests": 429,
+      "error_rate": 1.68,
+      "avg_response_time": 182.305705979357,
+      "min_response_time": 11,
+      "max_response_time": 2145,
+      "p90_response_time": 262.54203172061773,
+      "p95_response_time": 287.66872848047143,
+      "p99_response_time": 1560,
+      "tps": 85,
+      "qps": 85,
+      "avg_cpu": 43.7,
+      "max_cpu": 79.5,
+      "avg_memory": 37.4,
+      "max_memory": 83.3,
+      "avg_network_in": 8.3,
+      "avg_network_out": 9.8,
+      "concurrent_users": 100
+    },
+    "timeline": [
+      {
+        "timestamp": "2026-07-24 08:40:00",
+        "tps": 96.1,
+        "avg_rt": 194.8,
+        "error_rate": 2.47,
+        "cpu": 58.9,
+        "memory": 58.3
+      },
+      {
+        "timestamp": "2026-07-24 08:40:30",
+        "tps": 97.3,
+        "avg_rt": 243.6,
+        "error_rate": 1.59,
+        "cpu": 33.6,
+        "memory": 68.0
+      },
+      {
+        "timestamp": "2026-07-24 08:41:00",
+        "tps": 93.1,
+        "avg_rt": 197.4,
+        "error_rate": 2.38,
+        "cpu": 59.0,
+        "memory": 58.7
+      },
+      {
+        "timestamp": "2026-07-24 08:41:30",
+        "tps": 76.0,
+        "avg_rt": 196.9,
+        "error_rate": 1.87,
+        "cpu": 66.7,
+        "memory": 74.6
+      },
+      {
+        "timestamp": "2026-07-24 08:42:00",
+        "tps": 93.2,
+        "avg_rt": 232.0,
+        "error_rate": 1.75,
+        "cpu": 41.7,
+        "memory": 64.0
+      },
+      {
+        "timestamp": "2026-07-24 08:42:30",
+        "tps": 80.6,
+        "avg_rt": 227.9,
+        "error_rate": 1.38,
+        "cpu": 60.8,
+        "memory": 33.4
+      },
+      {
+        "timestamp": "2026-07-24 08:43:00",
+        "tps": 94.4,
+        "avg_rt": 217.8,
+        "error_rate": 1.53,
+        "cpu": 27.2,
+        "memory": 32.7
+      },
+      {
+        "timestamp": "2026-07-24 08:43:30",
+        "tps": 92.7,
+        "avg_rt": 201.4,
+        "error_rate": 2.06,
+        "cpu": 38.3,
+        "memory": 52.9
+      },
+      {
+        "timestamp": "2026-07-24 08:44:00",
+        "tps": 84.8,
+        "avg_rt": 207.2,
+        "error_rate": 2.27,
+        "cpu": 61.0,
+        "memory": 70.1
+      },
+      {
+        "timestamp": "2026-07-24 08:44:30",
+        "tps": 77.8,
+        "avg_rt": 196.3,
+        "error_rate": 1.71,
+        "cpu": 34.9,
+        "memory": 42.2
+      }
+    ],
+    "bottlenecks": [
+      {
+        "type": "latency_tail",
+        "severity": "medium",
+        "metric": "p99_response_time",
+        "value": 1560,
+        "threshold": 911.5285298967849,
+        "description": "P99响应时间 1560ms 是平均值的 8.6 倍",
+        "suggestion": "检查GC停顿、网络抖动和慢查询"
+      }
+    ],
+    "anomalies": [],
+    "ai_analysis": {
+      "bottleneck_type": "latency_tail",
+      "confidence": 0.97,
+      "root_cause": "P99响应时间 1560ms 是平均值的 8.6 倍",
+      "suggestions": [
+        "检查GC停顿、网络抖动和慢查询"
+      ],
+      "trend_prediction": "如果持续当前负载，预计系统将在81分钟后出现性能下降",
+      "analysis_time": "2026-07-24 08:42:28",
+      "model_used": "PerfAnalyzer-Pro v2.1.0"
+    },
+    "created_at": "2026-07-24 08:40:31"
+  },
+  {
+    "id": "pr_001_584",
+    "test_id": "pt_001",
+    "test_name": "正常文件库查询压测",
+    "status": "running",
+    "start_time": "2026-07-25 23:49:16",
+    "end_time": null,
+    "duration": 300,
+    "concurrency": 100,
+    "summary": {
+      "total_requests": 15900,
+      "success_requests": 15477,
+      "failed_requests": 423,
+      "error_rate": 2.66,
+      "avg_response_time": 69.0728634370229,
+      "min_response_time": 18,
+      "max_response_time": 896,
+      "p90_response_time": 141.32959778015402,
+      "p95_response_time": 169.69328732549235,
+      "p99_response_time": 640,
+      "tps": 53,
+      "qps": 53,
+      "avg_cpu": 51.6,
+      "max_cpu": 60.2,
+      "avg_memory": 46.1,
+      "max_memory": 71.0,
+      "avg_network_in": 11.0,
+      "avg_network_out": 8.5,
+      "concurrent_users": 100
+    },
+    "timeline": [
+      {
+        "timestamp": "2026-07-25 23:49:00",
+        "tps": 51.8,
+        "avg_rt": 93.3,
+        "error_rate": 2.54,
+        "cpu": 50.9,
+        "memory": 71.9
+      },
+      {
+        "timestamp": "2026-07-25 23:49:30",
+        "tps": 43.1,
+        "avg_rt": 84.1,
+        "error_rate": 3.07,
+        "cpu": 28.4,
+        "memory": 43.6
+      },
+      {
+        "timestamp": "2026-07-25 23:50:00",
+        "tps": 46.3,
+        "avg_rt": 37.5,
+        "error_rate": 3.54,
+        "cpu": 28.7,
+        "memory": 56.2
+      },
+      {
+        "timestamp": "2026-07-25 23:50:30",
+        "tps": 61.5,
+        "avg_rt": 103.3,
+        "error_rate": 2.27,
+        "cpu": 20.6,
+        "memory": 52.9
+      },
+      {
+        "timestamp": "2026-07-25 23:51:00",
+        "tps": 67.7,
+        "avg_rt": 79.1,
+        "error_rate": 3.55,
+        "cpu": 42.9,
+        "memory": 43.8
+      },
+      {
+        "timestamp": "2026-07-25 23:51:30",
+        "tps": 53.3,
+        "avg_rt": 112.1,
+        "error_rate": 3.2,
+        "cpu": 30.9,
+        "memory": 66.6
+      },
+      {
+        "timestamp": "2026-07-25 23:52:00",
+        "tps": 50.5,
+        "avg_rt": 60.1,
+        "error_rate": 3.02,
+        "cpu": 44.4,
+        "memory": 72.4
+      },
+      {
+        "timestamp": "2026-07-25 23:52:30",
+        "tps": 51.9,
+        "avg_rt": 43.7,
+        "error_rate": 2.9,
+        "cpu": 37.0,
+        "memory": 68.0
+      },
+      {
+        "timestamp": "2026-07-25 23:53:00",
+        "tps": 49.3,
+        "avg_rt": 70.0,
+        "error_rate": 3.53,
+        "cpu": 46.5,
+        "memory": 39.7
+      },
+      {
+        "timestamp": "2026-07-25 23:53:30",
+        "tps": 66.2,
+        "avg_rt": 37.6,
+        "error_rate": 3.4,
+        "cpu": 55.3,
+        "memory": 56.7
+      }
+    ],
+    "bottlenecks": [
+      {
+        "type": "latency_tail",
+        "severity": "medium",
+        "metric": "p99_response_time",
+        "value": 640,
+        "threshold": 345.3643171851145,
+        "description": "P99响应时间 640ms 是平均值的 9.3 倍",
+        "suggestion": "检查GC停顿、网络抖动和慢查询"
+      }
+    ],
+    "anomalies": [
+      {
+        "timestamp": "2026-07-25 23:49:30",
+        "type": "error_rate_spike",
+        "severity": "critical",
+        "description": "错误率达到3.07%，超过3%阈值",
+        "value": 3.07,
+        "baseline": 3
+      },
+      {
+        "timestamp": "2026-07-25 23:50:00",
+        "type": "error_rate_spike",
+        "severity": "critical",
+        "description": "错误率达到3.54%，超过3%阈值",
+        "value": 3.54,
+        "baseline": 3
+      },
+      {
+        "timestamp": "2026-07-25 23:50:30",
+        "type": "response_time_spike",
+        "severity": "high",
+        "description": "响应时间从37.5ms突增至103.3ms",
+        "value": 103.3,
+        "baseline": 37.5
+      },
+      {
+        "timestamp": "2026-07-25 23:51:00",
+        "type": "error_rate_spike",
+        "severity": "critical",
+        "description": "错误率达到3.55%，超过3%阈值",
+        "value": 3.55,
+        "baseline": 3
+      },
+      {
+        "timestamp": "2026-07-25 23:51:30",
+        "type": "error_rate_spike",
+        "severity": "critical",
+        "description": "错误率达到3.2%，超过3%阈值",
+        "value": 3.2,
+        "baseline": 3
+      },
+      {
+        "timestamp": "2026-07-25 23:52:00",
+        "type": "error_rate_spike",
+        "severity": "critical",
+        "description": "错误率达到3.02%，超过3%阈值",
+        "value": 3.02,
+        "baseline": 3
+      },
+      {
+        "timestamp": "2026-07-25 23:53:00",
+        "type": "error_rate_spike",
+        "severity": "critical",
+        "description": "错误率达到3.53%，超过3%阈值",
+        "value": 3.53,
+        "baseline": 3
+      },
+      {
+        "timestamp": "2026-07-25 23:53:30",
+        "type": "error_rate_spike",
+        "severity": "critical",
+        "description": "错误率达到3.4%，超过3%阈值",
+        "value": 3.4,
+        "baseline": 3
+      }
+    ],
+    "ai_analysis": {
+      "bottleneck_type": "latency_tail",
+      "confidence": 0.91,
+      "root_cause": "P99响应时间 640ms 是平均值的 9.3 倍",
+      "suggestions": [
+        "检查GC停顿、网络抖动和慢查询"
+      ],
+      "trend_prediction": "如果持续当前负载，预计系统将在89分钟后出现性能下降",
+      "analysis_time": "2026-07-28 10:54:49",
+      "model_used": "PerfAnalyzer-Pro v2.1.0"
+    },
+    "created_at": "2026-07-25 23:49:16"
+  }
+]

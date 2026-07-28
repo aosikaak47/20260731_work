@@ -1,0 +1,1085 @@
+[
+  {
+    "id": "1",
+    "name": "用户登录接口",
+    "method": "POST",
+    "url": "/api/login",
+    "module": "用户管理",
+    "project_id": "1",
+    "environment_id": "2",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "body": "{\"username\": \"admin\", \"password\": \"123456\"}",
+    "body_type": "json",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      },
+      {
+        "type": "json_path",
+        "field": "code",
+        "expected": 0,
+        "operator": "=="
+      },
+      {
+        "type": "json_path",
+        "field": "data.token",
+        "expected": "",
+        "operator": "!="
+      }
+    ],
+    "status": "已启用",
+    "created_at": "2026-07-21 10:00",
+    "updated_at": "2026-07-24 13:20"
+  },
+  {
+    "id": "2",
+    "name": "获取用户列表",
+    "method": "GET",
+    "url": "/api/users",
+    "module": "用户管理",
+    "project_id": "1",
+    "environment_id": "1",
+    "headers": [],
+    "params": [
+      {
+        "key": "page",
+        "value": "1"
+      },
+      {
+        "key": "size",
+        "value": "10"
+      }
+    ],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      },
+      {
+        "type": "json_path",
+        "field": "code",
+        "expected": 0,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "created_at": "2026-07-21 10:30",
+    "updated_at": "2026-07-21 10:30"
+  },
+  {
+    "id": "3",
+    "name": "创建用户",
+    "method": "POST",
+    "url": "/api/users",
+    "module": "用户管理",
+    "project_id": "2",
+    "environment_id": "1",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "body": "{\"username\": \"testuser\", \"email\": \"test@example.com\", \"role\": \"user\"}",
+    "body_type": "json",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 201,
+        "operator": "=="
+      },
+      {
+        "type": "json_path",
+        "field": "code",
+        "expected": 0,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "created_at": "2026-07-21 11:00",
+    "updated_at": "2026-07-21 11:00"
+  },
+  {
+    "id": "4",
+    "name": "更新用户",
+    "method": "PUT",
+    "url": "/api/users/{id}",
+    "module": "用户管理",
+    "project_id": "2",
+    "environment_id": "1",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "body": "{\"username\": \"updateduser\"}",
+    "body_type": "json",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "created_at": "2026-07-21 11:30",
+    "updated_at": "2026-07-21 11:30"
+  },
+  {
+    "id": "5",
+    "name": "删除用户",
+    "method": "DELETE",
+    "url": "/api/users/{id}",
+    "module": "用户管理",
+    "project_id": "3",
+    "environment_id": "1",
+    "headers": [],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已禁用",
+    "created_at": "2026-07-21 12:00",
+    "updated_at": "2026-07-21 12:00"
+  },
+  {
+    "id": "6",
+    "name": "获取项目列表",
+    "method": "GET",
+    "url": "/api/projects",
+    "module": "项目管理",
+    "project_id": "3",
+    "environment_id": "2",
+    "headers": [],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "created_at": "2026-07-21 14:00",
+    "updated_at": "2026-07-21 14:00"
+  },
+  {
+    "id": "f1914d68-70b4-466c-b782-991406cc1152",
+    "name": "考情查询",
+    "method": "GET",
+    "url": "11111",
+    "module": "考勤",
+    "project_id": "4",
+    "environment_id": "2",
+    "headers": [],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [],
+    "status": "已启用",
+    "created_at": "2026-07-23 15:35",
+    "updated_at": "2026-07-23 15:35"
+  },
+  {
+    "id": "7a81aae7-f3b1-4d5a-9c25-6f006b03c1d8",
+    "name": "订单列表",
+    "method": "GET",
+    "url": "/api/orders",
+    "module": "订单管理",
+    "project_id": "",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "key": "status",
+        "value": "status",
+        "description": ""
+      },
+      {
+        "key": "page",
+        "value": 1,
+        "description": ""
+      }
+    ],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "27fd0449-2e59-4ab9-a894-aa1b4e972cf2",
+    "created_at": "2026-07-24 10:32",
+    "updated_at": "2026-07-24 10:32"
+  },
+  {
+    "id": "325d1368-6142-48f8-8687-cc127163fd24",
+    "name": "创建订单",
+    "method": "POST",
+    "url": "/api/orders",
+    "module": "订单管理",
+    "project_id": "",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "{\n  \"product_id\": 100,\n  \"quantity\": 2\n}",
+    "body_type": "json",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "de07a883-f0f6-43c0-80cc-404b4bb88147",
+    "created_at": "2026-07-24 10:32",
+    "updated_at": "2026-07-24 10:32"
+  },
+  {
+    "id": "366db5a6-fe44-4158-88a6-0b1a624882ae",
+    "name": "订单详情",
+    "method": "GET",
+    "url": "/api/orders/{id}",
+    "module": "订单管理",
+    "project_id": "",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "key": "id",
+        "value": "id",
+        "description": ""
+      }
+    ],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "565f54b6-8809-4b9d-9f37-1df728d27247",
+    "created_at": "2026-07-24 10:32",
+    "updated_at": "2026-07-24 10:32"
+  },
+  {
+    "id": "29fc46b0-0192-4609-bd95-0124c9b644e4",
+    "name": "??????",
+    "method": "GET",
+    "url": "/api/orders/stats",
+    "module": "????",
+    "project_id": "",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "key": "start_date",
+        "value": "2024-01-01",
+        "description": ""
+      },
+      {
+        "key": "end_date",
+        "value": "2024-12-31",
+        "description": ""
+      }
+    ],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      },
+      {
+        "type": "json_path",
+        "field": "code",
+        "expected": 0,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "test-new-1",
+    "created_at": "2026-07-24 11:16",
+    "updated_at": "2026-07-24 11:16"
+  },
+  {
+    "id": "d4b76b99-78b3-4f84-bc00-6f3b45405360",
+    "name": "获取单个用户详情",
+    "method": "GET",
+    "url": "/api/users/{id}",
+    "module": "用户",
+    "project_id": "1",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "key": "id",
+        "value": 1,
+        "description": "目标用户ID"
+      }
+    ],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "03d3cc81-d41e-4f10-8e21-0a9546880aac",
+    "created_at": "2026-07-24 11:31",
+    "updated_at": "2026-07-24 11:31"
+  },
+  {
+    "id": "1935592a-ca70-4338-84bd-6d616244fed5",
+    "name": "Get API cases",
+    "method": "GET",
+    "url": "/api/v1/api_cases",
+    "module": "Demo API",
+    "project_id": "",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "b9ecf343-7f29-4dda-8cee-18207f52b9fd",
+    "created_at": "2026-07-24 11:32",
+    "updated_at": "2026-07-24 11:32"
+  },
+  {
+    "id": "0171a655-6c62-48e7-9753-e3c6e18b5d7c",
+    "name": "Health Check",
+    "method": "GET",
+    "url": "/",
+    "module": "System",
+    "project_id": "",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "unique-test-2",
+    "created_at": "2026-07-24 11:34",
+    "updated_at": "2026-07-24 11:34"
+  },
+  {
+    "id": "bf2b4fe0-d05e-402c-9026-f8f331d0cc55",
+    "name": "测试统计接口",
+    "method": "GET",
+    "url": "/api/test/stats",
+    "module": "用户指定-测试统计",
+    "project_id": "2",
+    "environment_id": "1",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "unique-test-3",
+    "created_at": "2026-07-24 11:59",
+    "updated_at": "2026-07-24 11:59"
+  },
+  {
+    "id": "5fcae6a4-793e-4d71-8868-802ed001f3e2",
+    "name": "用户详情接口",
+    "method": "GET",
+    "url": "/api/user/detail",
+    "module": "用户管理",
+    "project_id": "1",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "unique-test-4",
+    "created_at": "2026-07-24 11:59",
+    "updated_at": "2026-07-24 11:59"
+  },
+  {
+    "id": "6e5d11ea-0b07-4fd9-ac50-8a5d77533668",
+    "name": "用户详情接口",
+    "method": "GET",
+    "url": "/api/user/detail",
+    "module": "用户管理",
+    "project_id": "1",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "unique-test-4",
+    "created_at": "2026-07-24 11:59",
+    "updated_at": "2026-07-24 11:59"
+  },
+  {
+    "id": "bcc2c6a2-c3bc-4ef0-8f7f-506e380208c5",
+    "name": "Test API",
+    "method": "GET",
+    "url": "/api/test",
+    "module": "test_module",
+    "project_id": "proj_001",
+    "environment_id": "env_001",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "test1",
+    "created_at": "2026-07-24 13:17",
+    "updated_at": "2026-07-24 13:17"
+  },
+  {
+    "id": "9f9d6e8f-a252-4a0a-8153-c88710af927b",
+    "name": "Test API",
+    "method": "GET",
+    "url": "/api/test",
+    "module": "test_module",
+    "project_id": "proj_001",
+    "environment_id": "env_001",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "test1",
+    "created_at": "2026-07-24 13:18",
+    "updated_at": "2026-07-24 13:18"
+  },
+  {
+    "id": "43430953-056e-4c95-b539-11effc4951a2",
+    "name": "Test API (duplicate)",
+    "method": "GET",
+    "url": "/api/test",
+    "module": "test_module",
+    "project_id": "proj_001",
+    "environment_id": "env_001",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "test1",
+    "created_at": "2026-07-24 13:18",
+    "updated_at": "2026-07-24 13:18"
+  },
+  {
+    "id": "1baea890-2393-4a06-96cf-4d42ed2e319f",
+    "name": "Create API",
+    "method": "POST",
+    "url": "/api/create",
+    "module": "custom_module",
+    "project_id": "proj_002",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "test2",
+    "created_at": "2026-07-24 13:18",
+    "updated_at": "2026-07-24 13:18"
+  },
+  {
+    "id": "cee0f27e-be1d-4b2b-9b71-41f6c6e67f71",
+    "name": "Update API",
+    "method": "PUT",
+    "url": "/api/update",
+    "module": "user_module",
+    "project_id": "",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "test3",
+    "created_at": "2026-07-24 13:18",
+    "updated_at": "2026-07-24 13:18"
+  },
+  {
+    "id": "fcf7c458-9db1-4dee-9cab-a612415cb801",
+    "name": "用户登录",
+    "method": "POST",
+    "url": "/api/login",
+    "module": "认证",
+    "project_id": "1",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "{\n  \"username\": \"\",\n  \"password\": \"\"\n}",
+    "body_type": "json",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      },
+      {
+        "type": "json_path",
+        "field": "code",
+        "expected": 0,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "4d0f3397-5b8f-45a3-b7f8-f80c84497dd1",
+    "created_at": "2026-07-24 13:20",
+    "updated_at": "2026-07-24 13:20"
+  },
+  {
+    "id": "df4156e0-b75d-4267-b655-034e2800d04c",
+    "name": "分页获取用户列表",
+    "method": "GET",
+    "url": "/api/users",
+    "module": "用户",
+    "project_id": "1",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "key": "page",
+        "value": 2,
+        "description": "分页页码，最小1"
+      },
+      {
+        "key": "size",
+        "value": 2,
+        "description": "每页数据条数，最大100"
+      },
+      {
+        "key": "keyword",
+        "value": "keyword",
+        "description": "姓名/邮箱模糊搜索关键词，不传则查全部"
+      }
+    ],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "97257693-813b-4bee-adcf-b47bdeca1c22",
+    "created_at": "2026-07-24 13:20",
+    "updated_at": "2026-07-24 13:20"
+  },
+  {
+    "id": "420482bb-098c-47a3-bd11-18135cd4cab4",
+    "name": "创建用户",
+    "method": "POST",
+    "url": "/api/users",
+    "module": "用户",
+    "project_id": "1",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "{\n  \"id\": 0,\n  \"name\": \"\",\n  \"email\": \"\",\n  \"role\": \"\"\n}",
+    "body_type": "json",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "c41c3b5a-a1ec-4b54-91f1-685b67b4c0f8",
+    "created_at": "2026-07-24 13:20",
+    "updated_at": "2026-07-24 13:20"
+  },
+  {
+    "id": "dbe63bb3-965f-421b-a5f6-be8e8b0d3fa5",
+    "name": "获取单个用户详情",
+    "method": "GET",
+    "url": "/api/users/{id}",
+    "module": "用户",
+    "project_id": "1",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "key": "id",
+        "value": 1,
+        "description": "目标用户ID"
+      }
+    ],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "f2026f87-2a86-4fcc-98d4-e7a5c026f2b2",
+    "created_at": "2026-07-24 13:20",
+    "updated_at": "2026-07-24 13:20"
+  },
+  {
+    "id": "5bffb95e-f829-4c9d-95fb-e675d1e87faa",
+    "name": "更新用户基础信息",
+    "method": "PUT",
+    "url": "/api/users/{id}",
+    "module": "用户",
+    "project_id": "1",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "key": "id",
+        "value": 1,
+        "description": "待更新用户ID"
+      }
+    ],
+    "body": "{\n  \"name\": \"\",\n  \"email\": \"\"\n}",
+    "body_type": "json",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "8e0af384-3f3c-4aa0-8a53-1eb9db713817",
+    "created_at": "2026-07-24 13:20",
+    "updated_at": "2026-07-24 13:20"
+  },
+  {
+    "id": "ff4f3133-0e6e-4cee-b2d7-42385bb8499f",
+    "name": "删除指定用户",
+    "method": "DELETE",
+    "url": "/api/users/{id}",
+    "module": "用户",
+    "project_id": "1",
+    "environment_id": "",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "key": "id",
+        "value": 1,
+        "description": "待删除用户ID"
+      }
+    ],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "a550036a-d18e-4e7d-81b4-124ba295b418",
+    "created_at": "2026-07-24 13:20",
+    "updated_at": "2026-07-24 13:20"
+  },
+  {
+    "id": "b5252d76-b7c6-4054-b5b0-10d74ecf81b0",
+    "name": "创建对话补全",
+    "method": "POST",
+    "url": "/chat/completions",
+    "module": "OpenAI Chat API",
+    "project_id": "1",
+    "environment_id": "2",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": "{\n  \"model\": \"gpt-3.5-turbo\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"你是专业AI助手\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"你好\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"stream\": false\n}",
+    "body_type": "json",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "ef256656-7d3b-4663-9cd8-c81a329f800d",
+    "created_at": "2026-07-25 23:45",
+    "updated_at": "2026-07-25 23:47"
+  },
+  {
+    "id": "756a8d57-ce27-477e-8252-6f0c686150a1",
+    "name": "分页查询待审核考核任务",
+    "method": "GET",
+    "url": "/jzgkh/assessmentTask/queryPageExamine",
+    "module": "考核任务模块",
+    "project_id": "5",
+    "environment_id": "2",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json;charset=UTF-8"
+      },
+      {
+        "key": "X-Access-Token",
+        "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXNzd29yZCI6Ijk2NjU3MjJiZTJiNDQ5NDciLCJleHAiOjE3ODUyMTg3NTAsInVzZXJuYW1lIjoiemh4eWdseSJ9.iNoriN-wjrzetNpWIBxkuNL4L61h1hLxQYwju_v33jU"
+      }
+    ],
+    "params": [
+      {
+        "key": "queryType",
+        "value": "all",
+        "description": "查询类型，示例值：all 查询全部"
+      },
+      {
+        "key": "pageNo",
+        "value": 1,
+        "description": "当前页码"
+      },
+      {
+        "key": "pageSize",
+        "value": "10",
+        "description": "每页条数"
+      }
+    ],
+    "body": "",
+    "body_type": "json",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      },
+      {
+        "type": "json_path",
+        "field": "code",
+        "expected": 0,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "d40ce37f-710d-4cbe-9a79-509b56c06b8f",
+    "created_at": "2026-07-28 13:33",
+    "updated_at": "2026-07-28 13:38"
+  }
+]

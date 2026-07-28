@@ -1,0 +1,92 @@
+[
+  {
+    "id": "1",
+    "name": "超级管理员",
+    "code": "SUPER_ADMIN",
+    "description": "拥有平台所有权限，可管理所有模块和数据",
+    "permission_ids": [
+      "p1",
+      "p2",
+      "p3",
+      "p4",
+      "p17",
+      "p18",
+      "p19",
+      "p5",
+      "p6",
+      "p7",
+      "p8",
+      "p9",
+      "p10",
+      "p11",
+      "p12",
+      "p13",
+      "p14",
+      "p20",
+      "p15",
+      "p16"
+    ],
+    "status": "启用",
+    "created_at": "2026-01-01 00:00:00",
+    "updated_at": "2026-07-23 18:42:44"
+  },
+  {
+    "id": "2",
+    "name": "项目管理员",
+    "code": "PROJECT_ADMIN",
+    "description": "管理指定项目的所有功能和数据",
+    "permission_ids": [
+      "p1",
+      "p2",
+      "p3",
+      "p4",
+      "p5",
+      "p6",
+      "p7",
+      "p8",
+      "p9",
+      "p10",
+      "p11",
+      "p12",
+      "p15",
+      "p16"
+    ],
+    "status": "active",
+    "created_at": "2026-01-01 00:00:00",
+    "updated_at": "2026-07-23 18:42:49"
+  },
+  {
+    "id": "3",
+    "name": "测试工程师",
+    "code": "TEST_ENGINEER",
+    "description": "执行测试任务、查看报告、管理用例",
+    "permission_ids": [
+      "p3",
+      "p4",
+      "p5",
+      "p6",
+      "p7",
+      "p8",
+      "p10",
+      "p11",
+      "p15"
+    ],
+    "status": "active",
+    "created_at": "2026-01-01 00:00:00",
+    "updated_at": "2026-04-01 14:30:00"
+  },
+  {
+    "id": "4",
+    "name": "只读访客",
+    "code": "VIEWER",
+    "description": "仅拥有查看权限，不可修改数据",
+    "permission_ids": [
+      "p1",
+      "p3",
+      "p15"
+    ],
+    "status": "启用",
+    "created_at": "2026-01-01 00:00:00",
+    "updated_at": "2026-07-23 18:42:30"
+  }
+]

@@ -1,0 +1,260 @@
+{
+  "id": "6a2618bb-70e1-49f7-8c1e-a30ec3d3c92f",
+  "scenario_id": "500608e9-7ab8-4b81-abc4-cd43f31b8ac6",
+  "scenario_name": "121",
+  "environment_id": "2",
+  "environment_name": "测试环境",
+  "start_time": "2026-07-23 09:38:59",
+  "end_time": "2026-07-23 09:38:59",
+  "total_time": 282.04,
+  "total_steps": 4,
+  "passed_steps": 0,
+  "failed_steps": 4,
+  "skipped_steps": 0,
+  "all_passed": false,
+  "status": "失败",
+  "steps": [
+    {
+      "step": {
+        "id": "1784768689476",
+        "api_case_id": "d9642874-53f2-4975-bdfc-9de3204d708d",
+        "name": "我的评价列表",
+        "method": "POST",
+        "url": "/cloud-api/StudentmanagementCp/zhxybasexscomment/evaluationRecordList",
+        "waitTime": 0,
+        "retryCount": 0,
+        "skip": false,
+        "extract_params": []
+      },
+      "skipped": false,
+      "passed": false,
+      "request_body": null,
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "Server": "nginx/1.16.1",
+          "Date": "Thu, 23 Jul 2026 01:39:02 GMT",
+          "Content-Type": "text/html;charset=UTF-8",
+          "Transfer-Encoding": "chunked",
+          "Connection": "keep-alive",
+          "Access-Control-Allow-Methods": "GET,POST,OPTIONS,PUT,DELETE",
+          "Access-Control-Allow-Credentials": "true",
+          "Set-Cookie": "rememberMe=deleteMe; Path=/jeecg-boot; Max-Age=0; Expires=Wed, 22-Jul-2026 01:39:02 GMT; SameSite=lax",
+          "vary": "accept-encoding",
+          "Content-Encoding": "gzip"
+        },
+        "body": {
+          "success": false,
+          "message": "Token失效，请重新登录!",
+          "code": 401,
+          "result": null,
+          "timestamp": 1784770742299
+        },
+        "body_type": "json",
+        "time": 64.66
+      },
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "operator": "==",
+            "expected": 200
+          },
+          "passed": false,
+          "actual": 401
+        },
+        {
+          "assertion": {
+            "type": "json_path",
+            "operator": "==",
+            "expected": "",
+            "field": "message"
+          },
+          "passed": false,
+          "actual": "Token失效，请重新登录!"
+        }
+      ],
+      "extracted_vars": {},
+      "time": 64.66
+    },
+    {
+      "step": {
+        "id": "1784768690292",
+        "api_case_id": "469e2c3f-ac09-40ff-8f45-92c43fc5669c",
+        "name": "学生档案列表查询",
+        "method": "POST",
+        "url": "/cloud-api/StudentmanagementCp/zhxybasexscomment/studentRankList",
+        "waitTime": 0,
+        "retryCount": 0,
+        "skip": false,
+        "extract_params": []
+      },
+      "skipped": false,
+      "passed": false,
+      "request_body": null,
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "Server": "nginx/1.16.1",
+          "Date": "Thu, 23 Jul 2026 01:39:02 GMT",
+          "Content-Type": "text/html;charset=UTF-8",
+          "Transfer-Encoding": "chunked",
+          "Connection": "keep-alive",
+          "Access-Control-Allow-Methods": "GET,POST,OPTIONS,PUT,DELETE",
+          "Access-Control-Allow-Credentials": "true",
+          "Set-Cookie": "rememberMe=deleteMe; Path=/jeecg-boot; Max-Age=0; Expires=Wed, 22-Jul-2026 01:39:02 GMT; SameSite=lax",
+          "vary": "accept-encoding",
+          "Content-Encoding": "gzip"
+        },
+        "body": {
+          "success": false,
+          "message": "Token失效，请重新登录!",
+          "code": 401,
+          "result": null,
+          "timestamp": 1784770742373
+        },
+        "body_type": "json",
+        "time": 76.38
+      },
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "operator": "==",
+            "expected": "300"
+          },
+          "passed": false,
+          "actual": 401
+        }
+      ],
+      "extracted_vars": {},
+      "time": 76.38
+    },
+    {
+      "step": {
+        "id": "1784768699276",
+        "api_case_id": "d9642874-53f2-4975-bdfc-9de3204d708d",
+        "name": "我的评价列表",
+        "method": "POST",
+        "url": "/cloud-api/StudentmanagementCp/zhxybasexscomment/evaluationRecordList",
+        "waitTime": 0,
+        "retryCount": 0,
+        "skip": false,
+        "extract_params": []
+      },
+      "skipped": false,
+      "passed": false,
+      "request_body": null,
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "Server": "nginx/1.16.1",
+          "Date": "Thu, 23 Jul 2026 01:39:02 GMT",
+          "Content-Type": "text/html;charset=UTF-8",
+          "Transfer-Encoding": "chunked",
+          "Connection": "keep-alive",
+          "Access-Control-Allow-Methods": "GET,POST,OPTIONS,PUT,DELETE",
+          "Access-Control-Allow-Credentials": "true",
+          "Set-Cookie": "rememberMe=deleteMe; Path=/jeecg-boot; Max-Age=0; Expires=Wed, 22-Jul-2026 01:39:02 GMT; SameSite=lax",
+          "vary": "accept-encoding",
+          "Content-Encoding": "gzip"
+        },
+        "body": {
+          "success": false,
+          "message": "Token失效，请重新登录!",
+          "code": 401,
+          "result": null,
+          "timestamp": 1784770742440
+        },
+        "body_type": "json",
+        "time": 66.42
+      },
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "operator": "==",
+            "expected": 200
+          },
+          "passed": false,
+          "actual": 401
+        },
+        {
+          "assertion": {
+            "type": "json_path",
+            "operator": "==",
+            "expected": "",
+            "field": "message"
+          },
+          "passed": false,
+          "actual": "Token失效，请重新登录!"
+        }
+      ],
+      "extracted_vars": {},
+      "time": 66.42
+    },
+    {
+      "step": {
+        "id": "1784768700931",
+        "api_case_id": "d9642874-53f2-4975-bdfc-9de3204d708d",
+        "name": "我的评价列表",
+        "method": "POST",
+        "url": "/cloud-api/StudentmanagementCp/zhxybasexscomment/evaluationRecordList",
+        "waitTime": 0,
+        "retryCount": 0,
+        "skip": false,
+        "extract_params": []
+      },
+      "skipped": false,
+      "passed": false,
+      "request_body": null,
+      "response": {
+        "status_code": 401,
+        "headers": {
+          "Server": "nginx/1.16.1",
+          "Date": "Thu, 23 Jul 2026 01:39:02 GMT",
+          "Content-Type": "text/html;charset=UTF-8",
+          "Transfer-Encoding": "chunked",
+          "Connection": "keep-alive",
+          "Access-Control-Allow-Methods": "GET,POST,OPTIONS,PUT,DELETE",
+          "Access-Control-Allow-Credentials": "true",
+          "Set-Cookie": "rememberMe=deleteMe; Path=/jeecg-boot; Max-Age=0; Expires=Wed, 22-Jul-2026 01:39:02 GMT; SameSite=lax",
+          "vary": "accept-encoding",
+          "Content-Encoding": "gzip"
+        },
+        "body": {
+          "success": false,
+          "message": "Token失效，请重新登录!",
+          "code": 401,
+          "result": null,
+          "timestamp": 1784770742509
+        },
+        "body_type": "json",
+        "time": 74.58
+      },
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "operator": "==",
+            "expected": 200
+          },
+          "passed": false,
+          "actual": 401
+        },
+        {
+          "assertion": {
+            "type": "json_path",
+            "operator": "==",
+            "expected": "",
+            "field": "message"
+          },
+          "passed": false,
+          "actual": "Token失效，请重新登录!"
+        }
+      ],
+      "extracted_vars": {},
+      "time": 74.58
+    }
+  ]
+}

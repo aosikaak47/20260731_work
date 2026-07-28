@@ -1,0 +1,86 @@
+[
+  {
+    "id": "1",
+    "name": "开发环境",
+    "base_url": "http://dev.example.com/api",
+    "status": "禁用",
+    "timeout": 30,
+    "retry": 3,
+    "variables": [
+      {
+        "key": "token",
+        "value": "dev_token_123",
+        "description": "认证令牌"
+      },
+      {
+        "key": "api_version",
+        "value": "v1",
+        "description": "API版本"
+      }
+    ],
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "created_at": "2026-07-20 10:00",
+    "updated_at": "2026-07-24 09:07"
+  },
+  {
+    "id": "2",
+    "name": "测试环境",
+    "base_url": "http://36.133.61.111:18004",
+    "status": "启用",
+    "timeout": 30,
+    "retry": 3,
+    "variables": [
+      {
+        "key": "token",
+        "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3ODQ3MTAyMDUsInVzZXJuYW1lIjoiemh4eWdseSJ9.FDptD8FD5LUmY_f9fgi2oi6Vu7d-bIFPAm8KdXRGVZw",
+        "description": "认证令牌"
+      },
+      {
+        "key": "api_version",
+        "value": "v1",
+        "description": "API版本"
+      }
+    ],
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Accept",
+        "value": "application/json"
+      }
+    ],
+    "created_at": "2026-07-20 10:30",
+    "updated_at": "2026-07-22 16:20"
+  },
+  {
+    "id": "3",
+    "name": "预发环境",
+    "base_url": "http://pre.example.com/api",
+    "status": "禁用",
+    "timeout": 60,
+    "retry": 2,
+    "variables": [],
+    "headers": [],
+    "created_at": "2026-07-20 11:00",
+    "updated_at": "2026-07-20 11:00"
+  },
+  {
+    "id": "4",
+    "name": "生产环境",
+    "base_url": "http://api.example.com",
+    "status": "禁用",
+    "timeout": 60,
+    "retry": 1,
+    "variables": [],
+    "headers": [],
+    "created_at": "2026-07-20 11:30",
+    "updated_at": "2026-07-20 11:30"
+  }
+]

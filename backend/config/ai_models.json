@@ -1,0 +1,135 @@
+[
+  {
+    "id": "model_001",
+    "name": "PerfAnalyzer-Pro",
+    "version": "2.1.0",
+    "type": "bottleneck_analysis",
+    "description": "基于深度学习的性能瓶颈分析模型，支持多维度指标分析",
+    "status": "active",
+    "accuracy": 0.92,
+    "training_data_size": 50000,
+    "last_trained": "2026-07-15 08:00:00",
+    "algorithm": "LSTM + Attention",
+    "metrics": {
+      "precision": 0.91,
+      "recall": 0.89,
+      "f1_score": 0.90,
+      "false_positive_rate": 0.05
+    },
+    "features": ["response_time", "tps", "error_rate", "cpu", "memory", "network_io", "gc_time", "thread_count"],
+    "config": {
+      "learning_rate": 0.001,
+      "batch_size": 64,
+      "epochs": 100,
+      "hidden_layers": [128, 64, 32],
+      "dropout": 0.2
+    }
+  },
+  {
+    "id": "model_002",
+    "name": "AnomalyDetector-X",
+    "version": "1.5.0",
+    "type": "anomaly_detection",
+    "description": "基于自编码器的实时异常检测模型，支持时间序列异常检测",
+    "status": "active",
+    "accuracy": 0.95,
+    "training_data_size": 100000,
+    "last_trained": "2026-07-10 10:00:00",
+    "algorithm": "Autoencoder + Isolation Forest",
+    "metrics": {
+      "precision": 0.94,
+      "recall": 0.96,
+      "f1_score": 0.95,
+      "false_positive_rate": 0.03
+    },
+    "features": ["tps", "response_time", "error_rate", "cpu", "memory", "network_io"],
+    "config": {
+      "learning_rate": 0.0005,
+      "batch_size": 128,
+      "epochs": 200,
+      "hidden_layers": [64, 32, 16, 32, 64],
+      "dropout": 0.1,
+      "threshold": 0.85
+    }
+  },
+  {
+    "id": "model_003",
+    "name": "ScenarioGen-AI",
+    "version": "1.0.0",
+    "type": "scenario_generation",
+    "description": "基于强化学习的智能测试场景生成模型，自动生成高效压测场景",
+    "status": "active",
+    "accuracy": 0.85,
+    "training_data_size": 20000,
+    "last_trained": "2026-07-05 14:00:00",
+    "algorithm": "PPO + GPT",
+    "metrics": {
+      "precision": 0.83,
+      "recall": 0.87,
+      "f1_score": 0.85,
+      "false_positive_rate": 0.08
+    },
+    "features": ["api_paths", "request_params", "user_behaviors", "business_flows"],
+    "config": {
+      "learning_rate": 0.0003,
+      "batch_size": 32,
+      "epochs": 150,
+      "hidden_layers": [256, 128, 64],
+      "dropout": 0.15,
+      "exploration_rate": 0.1
+    }
+  },
+  {
+    "id": "model_004",
+    "name": "PredictForecaster",
+    "version": "3.0.0",
+    "type": "predictive_analysis",
+    "description": "基于时序预测的性能趋势预测模型，支持长期容量规划",
+    "status": "active",
+    "accuracy": 0.89,
+    "training_data_size": 80000,
+    "last_trained": "2026-07-12 09:00:00",
+    "algorithm": "Transformer + ARIMA",
+    "metrics": {
+      "precision": 0.88,
+      "recall": 0.90,
+      "f1_score": 0.89,
+      "false_positive_rate": 0.06
+    },
+    "features": ["historical_tps", "historical_rt", "user_growth", "seasonality", "trend"],
+    "config": {
+      "learning_rate": 0.0001,
+      "batch_size": 256,
+      "epochs": 300,
+      "hidden_layers": [512, 256, 128, 64],
+      "dropout": 0.1,
+      "forecast_horizon": 30
+    }
+  },
+  {
+    "id": "model_005",
+    "name": "RootCauseAnalyzer",
+    "version": "1.2.0",
+    "type": "root_cause_analysis",
+    "description": "基于因果推理的根因分析模型，快速定位性能问题根因",
+    "status": "training",
+    "accuracy": 0.81,
+    "training_data_size": 30000,
+    "last_trained": "2026-07-01 12:00:00",
+    "algorithm": "Causal Graph + BERT",
+    "metrics": {
+      "precision": 0.80,
+      "recall": 0.83,
+      "f1_score": 0.81,
+      "false_positive_rate": 0.10
+    },
+    "features": ["logs", "metrics", "traces", "topology", "config_changes"],
+    "config": {
+      "learning_rate": 0.0002,
+      "batch_size": 16,
+      "epochs": 500,
+      "hidden_layers": [768, 384, 192],
+      "dropout": 0.3
+    }
+  }
+]

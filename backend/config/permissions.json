@@ -1,0 +1,22 @@
+[
+  { "id": "p1", "code": "DASHBOARD_VIEW", "name": "查看仪表盘", "module": "仪表盘", "type": "menu" },
+  { "id": "p2", "code": "PROJECT_MANAGE", "name": "项目管理", "module": "项目管理", "type": "menu" },
+  { "id": "p3", "code": "CASE_VIEW", "name": "查看用例", "module": "用例集管理", "type": "menu" },
+  { "id": "p4", "code": "CASE_MANAGE", "name": "管理用例", "module": "用例集管理", "type": "menu" },
+  { "id": "p5", "code": "CASE_AI_GENERATE", "name": "AI用例生成", "module": "AI用例生成", "type": "menu" },
+  { "id": "p6", "code": "API_CASE_MANAGE", "name": "接口用例管理", "module": "接口用例管理", "type": "menu" },
+  { "id": "p7", "code": "API_SCENARIO_MANAGE", "name": "接口场景管理", "module": "接口场景管理", "type": "menu" },
+  { "id": "p8", "code": "API_TASK_MANAGE", "name": "接口任务管理", "module": "接口任务管理", "type": "menu" },
+  { "id": "p9", "code": "UI_CASE_MANAGE", "name": "UI用例管理", "module": "UI自动化", "type": "menu" },
+  { "id": "p10", "code": "REPORT_VIEW", "name": "查看报告", "module": "测试报告", "type": "menu" },
+  { "id": "p11", "code": "REPORT_EXPORT", "name": "导出报告", "module": "测试报告", "type": "button" },
+  { "id": "p12", "code": "CONFIG_MANAGE", "name": "系统配置", "module": "系统设置", "type": "menu" },
+  { "id": "p13", "code": "USER_MANAGE", "name": "用户管理", "module": "系统设置", "type": "menu" },
+  { "id": "p14", "code": "ROLE_MANAGE", "name": "角色权限管理", "module": "系统设置", "type": "menu" },
+  { "id": "p15", "code": "STATS_VIEW", "name": "查看统计", "module": "数据统计", "type": "menu" },
+  { "id": "p16", "code": "DATA_EXPORT", "name": "数据导出", "module": "数据统计", "type": "button" },
+  { "id": "p17", "code": "CASE_ARCHIVE", "name": "用例归档", "module": "用例集管理", "type": "button" },
+  { "id": "p18", "code": "CASE_IMPORT", "name": "导入用例", "module": "用例集管理", "type": "button" },
+  { "id": "p19", "code": "CASE_BATCH_EXECUTE", "name": "批量执行", "module": "用例集管理", "type": "button" },
+  { "id": "p20", "code": "SYSTEM_ADMIN", "name": "系统管理", "module": "系统设置", "type": "menu" }
+]

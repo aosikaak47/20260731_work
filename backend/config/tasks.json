@@ -1,0 +1,17 @@
+[
+  {
+    "id": "26cb0fe1-89e1-4ccc-8f34-b3fc8f0489f9",
+    "name": "每日定时",
+    "scenario_id": "500608e9-7ab8-4b81-abc4-cd43f31b8ac6",
+    "scenario_name": "121",
+    "environment_id": "2",
+    "environment_name": "测试环境",
+    "cron_expression": "",
+    "status": "已启用",
+    "last_run_time": "2026-07-23 09:38",
+    "last_run_status": "失败",
+    "next_run_time": "",
+    "created_at": "2026-07-23 09:22",
+    "updated_at": "2026-07-23 09:22"
+  }
+]
