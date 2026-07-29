@@ -103,5 +103,17 @@
     ],
     "created_at": "2026-07-28 16:14",
     "updated_at": "2026-07-28 16:14"
+  },
+  {
+    "id": "c7c92e69-7ea8-46a7-9aff-5222365d2463",
+    "name": "一体化环境",
+    "base_url": "http://192.168.100.167",
+    "status": "启用",
+    "timeout": 30,
+    "retry": 3,
+    "variables": [],
+    "headers": [],
+    "created_at": "2026-07-29 16:26",
+    "updated_at": "2026-07-29 16:27"
   }
 ]

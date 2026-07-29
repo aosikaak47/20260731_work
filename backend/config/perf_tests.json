@@ -4,7 +4,7 @@
     "name": "正常文件库查询压测",
     "project_id": "5",
     "project_name": "智能测试平台",
-    "target_url": "192.168.100.61:7275/prod-api/table/getTable",
+    "target_url": "/prod-api/table/getTable",
     "method": "POST",
     "protocol": "HTTP",
     "concurrency": 1,
@@ -17,7 +17,7 @@
     "tags": [
       "查询"
     ],
-    "headers": "Content-Type:application/json;charset=UTF-8\nX-Access-Token:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXNzd29yZCI6IjJhNWU5MjI1ZGZlNmZiZWIiLCJleHAiOjE3ODUyMjc5MjQsInVzZXJuYW1lIjoiYWRtaW4ifQ.RN4G-FIxxPJP6rN-mU8pfvApCk3YwdWM-0ay9kn-8jo\n",
+    "headers": "",
     "body": "{\"tableName\":\"diversified_tandards_library\",\"pageSize\":10,\"pageNo\":1,\"map\":{\"contents_guid\":\"1\"},\"roleCode\":\"admin\"}",
     "assertions": [
       {
@@ -27,9 +27,37 @@
       }
     ],
     "created_at": "2026-07-20 10:00:00",
-    "updated_at": "2026-07-29 14:32:07",
+    "updated_at": "2026-07-29 16:17:37",
     "created_by": "admin",
-    "last_run": "2026-07-29 14:32:31",
-    "last_run_id": "pr_001_148"
+    "last_run": "2026-07-29 16:13:06",
+    "last_run_id": "pr_001_798",
+    "test_type": "scenario",
+    "environment_id": "env_staging",
+    "steps": [
+      {
+        "id": 1785312928699.324,
+        "type": "request",
+        "name": "请求步骤 1",
+        "delay": 0,
+        "retry": 0,
+        "timeout": 30,
+        "method": "POST",
+        "url": "/prod-api/table/getTable",
+        "headers": "{}",
+        "body": "{\"tableName\":\"diversified_tandards_library\",\"pageSize\":10,\"pageNo\":1,\"map\":{\"contents_guid\":\"1\"},\"roleCode\":\"admin\"}"
+      },
+      {
+        "id": 1785312956211.952,
+        "type": "request",
+        "name": "请求步骤 2",
+        "delay": 0,
+        "retry": 0,
+        "timeout": 30,
+        "method": "POST",
+        "url": "/prod-api/table/getTable",
+        "headers": "{}",
+        "body": "{\"tableName\":\"diversified_tandards_library\",\"pageSize\":1,\"pageNo\":1,\"map\":{\"contents_guid\":\"1\"},\"roleCode\":\"admin\"}"
+      }
+    ]
   }
 ]

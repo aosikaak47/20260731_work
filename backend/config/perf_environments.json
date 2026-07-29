@@ -1,0 +1,31 @@
+[
+  {
+    "id": "env_dev",
+    "name": "开发环境",
+    "base_url": "http://dev.example.com",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "description": "开发环境"
+  },
+  {
+    "id": "env_staging",
+    "name": "测试环境",
+    "base_url": "http://192.168.100.61:7275",
+    "headers": {
+      "Content-Type": "application/json",
+      "X-Access-Token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXNzd29yZCI6IjJhNWU5MjI1ZGZlNmZiZWIiLCJleHAiOjE3ODUzMTQzODcsInVzZXJuYW1lIjoiYWRtaW4ifQ.RvqrTr-kBQHxqxv9GiaOade7NWDhwOBu0k0aDpBOWNQ"
+    },
+    "description": "测试环境",
+    "updated_at": "2026-07-29 16:11:07"
+  },
+  {
+    "id": "env_prod",
+    "name": "生产环境",
+    "base_url": "https://api.example.com",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "description": "生产环境"
+  }
+]

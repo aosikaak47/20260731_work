@@ -1154,5 +1154,43 @@
     "status": "已启用",
     "created_at": "2026-07-28 16:16",
     "updated_at": "2026-07-28 16:16"
+  },
+  {
+    "id": "ab9d8316-86ce-4980-aadf-c62f6904fed1",
+    "name": "登录一体化数智服务平台",
+    "method": "GET",
+    "url": "/sign/appList",
+    "module": "",
+    "project_id": "5",
+    "environment_id": "c7c92e69-7ea8-46a7-9aff-5222365d2463",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json;charset=UTF-8"
+      },
+      {
+        "key": "Cookie",
+        "value": "JSESSIONID=01F2F680D41AA1085967D0F617D3D496; Hm_lvt_ae02bfc0d49b4dfa890f81d96472fe99=1784859666,1785130627,1785134818,1785204290"
+      }
+    ],
+    "params": [],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "operator": "==",
+        "expected": 200
+      },
+      {
+        "type": "json_path",
+        "operator": "contains",
+        "expected": "AI智能体开发与训练平台",
+        "field": "data[*]"
+      }
+    ],
+    "status": "已启用",
+    "created_at": "2026-07-29 16:25",
+    "updated_at": "2026-07-29 17:09"
   }
 ]
