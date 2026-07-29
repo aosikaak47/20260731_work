@@ -291,6 +291,54 @@
                 <el-input v-model="settings.integrations.prometheus.url" placeholder="http://localhost:9090" :disabled="!settings.integrations.prometheus.enabled" />
               </el-form-item>
             </div>
+            <div class="form-section">
+              <h3 class="section-title">
+                <el-icon><Tickets /></el-icon> 禅道 (Zentao)
+                <el-switch v-model="settings.integrations.zentao.enabled" class="section-switch" />
+              </h3>
+              <div class="form-row">
+                <el-form-item label="服务地址">
+                  <el-input v-model="settings.integrations.zentao.url" placeholder="http://zentao.example.com" :disabled="!settings.integrations.zentao.enabled" />
+                </el-form-item>
+                <el-form-item label="默认项目">
+                  <el-input v-model="settings.integrations.zentao.project" placeholder="默认项目ID" :disabled="!settings.integrations.zentao.enabled" />
+                </el-form-item>
+              </div>
+              <div class="form-row">
+                <el-form-item label="账号">
+                  <el-input v-model="settings.integrations.zentao.account" placeholder="禅道登录账号" :disabled="!settings.integrations.zentao.enabled" />
+                </el-form-item>
+                <el-form-item label="密码">
+                  <el-input v-model="settings.integrations.zentao.password" type="password" show-password placeholder="禅道登录密码" :disabled="!settings.integrations.zentao.enabled" />
+                </el-form-item>
+              </div>
+              <div class="form-row">
+                <el-form-item label="默认严重程度">
+                  <el-select v-model="settings.integrations.zentao.default_severity" :disabled="!settings.integrations.zentao.enabled" style="width: 100%">
+                    <el-option label="1-致命" :value="1" />
+                    <el-option label="2-严重" :value="2" />
+                    <el-option label="3-一般" :value="3" />
+                    <el-option label="4-轻微" :value="4" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="默认优先级">
+                  <el-select v-model="settings.integrations.zentao.default_priority" :disabled="!settings.integrations.zentao.enabled" style="width: 100%">
+                    <el-option label="1-紧急" :value="1" />
+                    <el-option label="2-高" :value="2" />
+                    <el-option label="3-中" :value="3" />
+                    <el-option label="4-低" :value="4" />
+                  </el-select>
+                </el-form-item>
+              </div>
+              <el-form-item label="连接测试">
+                <el-button type="primary" @click="testZentaoConnection" :disabled="!settings.integrations.zentao.enabled" :loading="zentaoTesting">
+                  测试连接
+                </el-button>
+                <span v-if="zentaoTestResult" :style="{ color: zentaoTestResult.success ? '#67c23a' : '#f56c6c', marginLeft: '10px' }">
+                  {{ zentaoTestResult.message }}
+                </span>
+              </el-form-item>
+            </div>
           </el-form>
         </el-tab-pane>
 
@@ -394,12 +442,14 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   Setting, Document, Odometer, Cpu, Bell, Connection, Link, ChatDotRound,
-  DataLine, Monitor, Lock, Expand, Plus, Delete, Check, RefreshLeft
+  DataLine, Monitor, Lock, Expand, Plus, Delete, Check, RefreshLeft, Tickets
 } from '@element-plus/icons-vue'
 
 const activeTab = ref('general')
 const loading = ref(false)
 const saving = ref(false)
+const zentaoTesting = ref(false)
+const zentaoTestResult = ref(null)
 
 const defaultSettings = () => ({
   general: {
@@ -439,7 +489,8 @@ const defaultSettings = () => ({
     jira: { enabled: false, url: '', token: '' },
     slack: { enabled: false, webhook: '' },
     grafana: { enabled: false, url: '', dashboard: '' },
-    prometheus: { enabled: false, url: '' }
+    prometheus: { enabled: false, url: '' },
+    zentao: { enabled: false, url: '', account: '', password: '', project: '', default_severity: 3, default_priority: 3 }
   },
   security: {
     session_timeout: 30,
@@ -470,6 +521,42 @@ const addAlertRule = () => {
 
 const removeAlertRule = (index) => {
   settings.alerts.rules.splice(index, 1)
+}
+
+const testZentaoConnection = async () => {
+  zentaoTesting.value = true
+  zentaoTestResult.value = null
+  try {
+    const zentao = settings.integrations.zentao
+    const res = await fetch('/api/v1/bugs/test_connection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        base_url: zentao.url,
+        account: zentao.account,
+        password: zentao.password
+      })
+    })
+    const json = await res.json()
+    zentaoTestResult.value = {
+      success: json.success,
+      message: json.message
+    }
+    if (json.success) {
+      ElMessage.success('禅道连接成功')
+    } else {
+      ElMessage.error(json.message || '连接失败')
+    }
+  } catch (e) {
+    console.error('测试禅道连接失败:', e)
+    zentaoTestResult.value = {
+      success: false,
+      message: '网络错误或请求超时'
+    }
+    ElMessage.error('测试连接失败')
+  } finally {
+    zentaoTesting.value = false
+  }
 }
 
 const loadSettings = async () => {

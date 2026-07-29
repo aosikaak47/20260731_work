@@ -4494,6 +4494,130 @@ async def get_perf_dashboard():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# --- 禅道 Bug 管理 API ---
+
+def get_zentao_config():
+    settings = load_platform_settings()
+    integrations = settings.get("integrations", {})
+    zentao = integrations.get("zentao", {})
+    return zentao
+
+def zentao_login(base_url, account, password):
+    import requests as req
+    login_url = f"{base_url.rstrip('/')}/api.php?m=user&f=apilogin"
+    params = {
+        "account": account,
+        "password": password
+    }
+    response = req.get(login_url, params=params, timeout=15)
+    data = response.json()
+    if data.get("status") == 1:
+        return data.get("data", "")
+    raise Exception(f"禅道登录失败: {data.get('reason', '未知错误')}")
+
+def zentao_create_bug(base_url, session_id, bug_data):
+    import requests as req
+    create_url = f"{base_url.rstrip('/')}/api.php?m=bug&f=apiCreate"
+    params = {
+        "data": json.dumps(bug_data, ensure_ascii=False)
+    }
+    headers = {
+        "Cookie": f"zentao-sid={session_id}"
+    }
+    response = req.get(create_url, params=params, headers=headers, timeout=30)
+    data = response.json()
+    if data.get("status") == 1:
+        return data.get("data", {})
+    raise Exception(f"创建Bug失败: {data.get('reason', '未知错误')}")
+
+@app.post("/api/v1/bugs/test_connection")
+async def test_zentao_connection(request: Request):
+    try:
+        body = await request.json()
+        base_url = body.get("base_url", "").strip().rstrip("/")
+        account = body.get("account", "").strip()
+        password = body.get("password", "").strip()
+        
+        if not base_url:
+            raise HTTPException(status_code=400, detail="禅道服务器地址不能为空")
+        if not account:
+            raise HTTPException(status_code=400, detail="账号不能为空")
+        if not password:
+            raise HTTPException(status_code=400, detail="密码不能为空")
+        
+        session_id = zentao_login(base_url, account, password)
+        return JSONResponse({
+            "success": True,
+            "message": "禅道连接成功",
+            "session_id": session_id
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse({
+            "success": False,
+            "message": f"连接失败: {str(e)}"
+        }, status_code=200)
+
+@app.post("/api/v1/bugs/submit")
+async def submit_bug_to_zentao(request: Request):
+    try:
+        body = await request.json()
+        zentao_config = get_zentao_config()
+        
+        base_url = zentao_config.get("url", "").strip().rstrip("/")
+        account = zentao_config.get("account", "").strip()
+        password = zentao_config.get("password", "").strip()
+        default_project = zentao_config.get("project", "")
+        
+        override_url = body.get("base_url", "").strip().rstrip("/")
+        if override_url:
+            base_url = override_url
+        override_account = body.get("account", "").strip()
+        if override_account:
+            account = override_account
+        override_password = body.get("password", "").strip()
+        if override_password:
+            password = override_password
+        
+        if not base_url:
+            raise HTTPException(status_code=400, detail="禅道服务器地址未配置，请先在平台设置中配置")
+        if not account:
+            raise HTTPException(status_code=400, detail="禅道账号未配置")
+        if not password:
+            raise HTTPException(status_code=400, detail="禅道密码未配置")
+        
+        bug_data = {
+            "title": body.get("title", "未命名Bug"),
+            "product": body.get("project", default_project),
+            "module": body.get("module", 0),
+            "severity": body.get("severity", 3),
+            "pri": body.get("priority", 3),
+            "type": body.get("type", "codeError"),
+            "steps": body.get("steps", ""),
+            "story": body.get("story", ""),
+            "openedBy": body.get("opened_by", account),
+            "assignedTo": body.get("assigned_to", "")
+        }
+        
+        session_id = zentao_login(base_url, account, password)
+        result = zentao_create_bug(base_url, session_id, bug_data)
+        
+        return JSONResponse({
+            "success": True,
+            "message": "Bug提交成功",
+            "bug_id": result.get("id", ""),
+            "bug_url": f"{base_url}/zentao/bug-view-{result.get('id', '')}.html"
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse({
+            "success": False,
+            "message": f"提交失败: {str(e)}"
+        }, status_code=200)
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

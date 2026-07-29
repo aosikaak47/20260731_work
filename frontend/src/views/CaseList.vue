@@ -176,12 +176,22 @@
                 <el-tag size="small" :type="getStatusTagType(scope.row.status)" effect="plain">{{ scope.row.status }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="200" class-name="action-cell" fixed="right">
+            <el-table-column label="操作" width="280" class-name="action-cell" fixed="right">
               <template #default="scope">
                 <div class="action-btns">
                   <el-button size="small" text @click="handleView(scope.row)">查看</el-button>
                   <el-button size="small" text @click="handleEdit(scope.row)">编辑</el-button>
                   <el-button size="small" text @click="handleCopy(scope.row)">复制</el-button>
+                  <el-button
+                    size="small"
+                    text
+                    type="warning"
+                    @click="handleSubmitBug(scope.row)"
+                    :disabled="scope.row.status !== '失败'"
+                  >
+                    <el-icon><component :is="icons.Tickets" /></el-icon>
+                    提交Bug
+                  </el-button>
                   <el-button size="small" text type="danger" @click="handleDelete(scope.row)">删除</el-button>
                 </div>
               </template>
@@ -420,6 +430,108 @@
         <el-button type="primary" @click="handleConfirmArchive">确认归档</el-button>
       </template>
     </el-dialog>
+    
+    <el-dialog v-model="bugDialogVisible" title="提交Bug到禅道" width="650px" :close-on-click-modal="false">
+      <el-form :model="bugForm" label-width="110px">
+        <el-alert
+          v-if="!zentaoConfigured"
+          title="禅道未配置"
+          type="warning"
+          :closable="false"
+          show-icon
+          style="margin-bottom: 16px"
+        >
+          <p>请先在 <strong>平台设置 → 集成配置 → 禅道</strong> 中配置禅道服务器连接信息。</p>
+        </el-alert>
+        
+        <el-form-item label="Bug标题" required>
+          <el-input v-model="bugForm.title" placeholder="请输入Bug标题" />
+        </el-form-item>
+        
+        <el-form-item label="所属项目" required>
+          <el-input v-model="bugForm.project" placeholder="禅道项目ID" :disabled="zentaoConfigured" />
+        </el-form-item>
+        
+        <el-form-item label="关联模块">
+          <el-input v-model="bugForm.module" placeholder="模块ID（可选）" />
+        </el-form-item>
+        
+        <div class="form-row-inline">
+          <el-form-item label="严重程度" required>
+            <el-select v-model="bugForm.severity" style="width: 100%">
+              <el-option label="1-致命" :value="1" />
+              <el-option label="2-严重" :value="2" />
+              <el-option label="3-一般" :value="3" />
+              <el-option label="4-轻微" :value="4" />
+            </el-select>
+          </el-form-item>
+          
+          <el-form-item label="优先级" required>
+            <el-select v-model="bugForm.priority" style="width: 100%">
+              <el-option label="1-紧急" :value="1" />
+              <el-option label="2-高" :value="2" />
+              <el-option label="3-中" :value="3" />
+              <el-option label="4-低" :value="4" />
+            </el-select>
+          </el-form-item>
+        </div>
+        
+        <el-form-item label="Bug类型">
+          <el-select v-model="bugForm.type" style="width: 100%">
+            <el-option label="代码错误" value="codeError" />
+            <el-option label="需求错误" value="storyError" />
+            <el-option label="设计错误" value="designError" />
+            <el-option label="配置错误" value="configError" />
+            <el-option label="安装部署" value="installError" />
+            <el-option label="性能问题" value="performance" />
+            <el-option label="安全问题" value="security" />
+            <el-option label="兼容性问题" value="compatibility" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
+        
+        <el-form-item label="指派给">
+          <el-input v-model="bugForm.assigned_to" placeholder="禅道账号（可选）" />
+        </el-form-item>
+        
+        <el-form-item label="重现步骤" required>
+          <el-input
+            v-model="bugForm.steps"
+            type="textarea"
+            :rows="6"
+            placeholder="请详细描述Bug重现步骤"
+          />
+        </el-form-item>
+        
+        <el-form-item label="相关故事">
+          <el-input v-model="bugForm.story" placeholder="禅道需求ID（可选）" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="bugDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleConfirmSubmitBug" :loading="bugSubmitting" :disabled="!zentaoConfigured">
+          提交Bug
+        </el-button>
+      </template>
+    </el-dialog>
+    
+    <el-dialog v-model="bugResultDialogVisible" title="Bug提交成功" width="450px" :close-on-click-modal="false">
+      <div class="bug-result">
+        <el-icon :size="48" color="#67c23a"><component :is="icons.SuccessFilled" /></el-icon>
+        <p class="bug-result-title">Bug已成功提交到禅道</p>
+        <div class="bug-result-info" v-if="bugResult">
+          <p>Bug ID: <strong>{{ bugResult.bug_id }}</strong></p>
+          <p>
+            <el-link :href="bugResult.bug_url" target="_blank" type="primary">
+              在禅道中查看 →
+            </el-link>
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="bugResultDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -461,9 +573,34 @@ const importDialogVisible = ref(false)
 const importTargetModuleId = ref('')
 const fileInputRef = ref(null)
 const archiveDialogVisible = ref(false)
+const bugDialogVisible = ref(false)
+const bugResultDialogVisible = ref(false)
+const bugSubmitting = ref(false)
+const bugResult = ref(null)
+const zentaoConfig = ref(null)
 
 const archiveForm = reactive({
   reason: ''
+})
+
+const bugForm = reactive({
+  title: '',
+  project: '',
+  module: '',
+  severity: 3,
+  priority: 3,
+  type: 'codeError',
+  steps: '',
+  story: '',
+  assigned_to: ''
+})
+
+const zentaoConfigured = computed(() => {
+  return zentaoConfig.value && 
+         zentaoConfig.value.enabled && 
+         zentaoConfig.value.url && 
+         zentaoConfig.value.account &&
+         zentaoConfig.value.password
 })
 
 const editForm = reactive({
@@ -1083,6 +1220,117 @@ const handlePageChange = (page) => {
   loadCases()
 }
 
+const loadZentaoConfig = async () => {
+  try {
+    const res = await fetch('/api/v1/platform/settings')
+    const json = await res.json()
+    const settings = json.settings || json
+    if (settings && settings.integrations && settings.integrations.zentao) {
+      zentaoConfig.value = settings.integrations.zentao
+      if (zentaoConfigured.value && zentaoConfig.value.project) {
+        bugForm.project = zentaoConfig.value.project
+      }
+    }
+  } catch (e) {
+    console.error('加载禅道配置失败:', e)
+  }
+}
+
+const handleSubmitBug = (row) => {
+  if (row.status !== '失败') {
+    ElMessage.warning('只有状态为"失败"的用例才能提交Bug')
+    return
+  }
+  
+  bugForm.title = `[${row.name}] 执行失败`
+  bugForm.project = zentaoConfig.value?.project || ''
+  bugForm.module = row.module_id || ''
+  bugForm.severity = zentaoConfig.value?.default_severity || 3
+  bugForm.priority = zentaoConfig.value?.default_priority || 3
+  bugForm.type = 'codeError'
+  bugForm.steps = buildBugSteps(row)
+  bugForm.story = ''
+  bugForm.assigned_to = ''
+  
+  bugDialogVisible.value = true
+}
+
+const buildBugSteps = (row) => {
+  let steps = `【用例名称】${row.name}\n`
+  steps += `【所属模块】${getModuleName(row.module_id) || row.module || '-'}\n`
+  steps += `【用例类型】${row.type || '-'}\n`
+  steps += `【优先级】${row.priority || '-'}\n\n`
+  
+  if (row.preconditions) {
+    steps += `【前置条件】\n${row.preconditions}\n\n`
+  }
+  
+  const testSteps = Array.isArray(row.steps) ? row.steps.join('\n') : (row.steps || '')
+  if (testSteps) {
+    steps += `【测试步骤】\n${testSteps}\n\n`
+  }
+  
+  if (row.expected_result) {
+    steps += `【预期结果】\n${row.expected_result}\n\n`
+  }
+  
+  steps += `【实际结果】\n用例执行失败，未能达到预期结果。\n\n`
+  steps += `【请在此处补充具体的失败描述和截图】`
+  
+  return steps
+}
+
+const handleConfirmSubmitBug = async () => {
+  if (!bugForm.title.trim()) {
+    ElMessage.warning('请输入Bug标题')
+    return
+  }
+  if (!bugForm.project.trim()) {
+    ElMessage.warning('请输入所属项目')
+    return
+  }
+  if (!bugForm.steps.trim()) {
+    ElMessage.warning('请填写重现步骤')
+    return
+  }
+  
+  bugSubmitting.value = true
+  try {
+    const res = await fetch('/api/v1/bugs/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: bugForm.title,
+        project: bugForm.project,
+        module: bugForm.module,
+        severity: bugForm.severity,
+        priority: bugForm.priority,
+        type: bugForm.type,
+        steps: bugForm.steps,
+        story: bugForm.story,
+        assigned_to: bugForm.assigned_to
+      })
+    })
+    const json = await res.json()
+    if (json.success) {
+      bugResult.value = {
+        bug_id: json.bug_id,
+        bug_url: json.bug_url
+      }
+      bugDialogVisible.value = false
+      bugResultDialogVisible.value = true
+      ElMessage.success('Bug提交成功')
+    } else {
+      ElMessage.error(json.message || '提交失败')
+    }
+  } catch (e) {
+    console.error('提交Bug失败:', e)
+    ElMessage.error('提交Bug失败，请检查网络连接')
+  } finally {
+    bugSubmitting.value = false
+  }
+}
+
 onMounted(async () => {
   await loadProjects()
   if (currentProjectId.value) {
@@ -1090,6 +1338,7 @@ onMounted(async () => {
     loadCases()
   }
   loadLibraryCases()
+  loadZentaoConfig()
 })
 
 watch(currentProjectId, () => {
@@ -1306,5 +1555,38 @@ watch(currentProjectId, () => {
   display: flex;
   gap: 4px;
   flex-wrap: nowrap;
+}
+
+.form-row-inline {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.form-row-inline .el-form-item {
+  flex: 1;
+}
+
+.bug-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.bug-result-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 12px 0;
+}
+
+.bug-result-info {
+  text-align: center;
+  color: #6b7280;
+}
+
+.bug-result-info p {
+  margin: 6px 0;
 }
 </style>
