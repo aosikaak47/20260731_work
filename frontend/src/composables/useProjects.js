@@ -19,14 +19,17 @@ export function useProjects() {
       initialized.value = true
     } catch (error) {
       console.error('加载项目列表失败:', error)
-      projects.value = [
-        { id: '1', name: '智能测试平台项目', description: '平台核心项目', status: '启用', memberCount: 5, caseCount: 456, createdAt: '2026-07-01 10:00' },
-        { id: '2', name: '党建系统项目', description: '党建管理系统测试项目', status: '启用', memberCount: 3, caseCount: 234, createdAt: '2026-07-05 14:30' },
-        { id: '3', name: '电商平台项目', description: '电商平台接口与UI自动化测试', status: '启用', memberCount: 4, caseCount: 567, createdAt: '2026-07-10 09:00' },
-        { id: '4', name: 'OA办公系统', description: '办公自动化系统测试', status: '禁用', memberCount: 2, caseCount: 128, createdAt: '2026-07-15 11:00' }
-      ]
-      if (!currentProjectId.value) {
-        currentProjectId.value = '1'
+      // 只有在未初始化时才使用默认数据
+      if (!initialized.value) {
+        projects.value = [
+          { id: '1', name: '智能测试平台项目', description: '平台核心项目', status: '启用', memberCount: 5, caseCount: 456, createdAt: '2026-07-01 10:00' },
+          { id: '2', name: '党建系统项目', description: '党建管理系统测试项目', status: '启用', memberCount: 3, caseCount: 234, createdAt: '2026-07-05 14:30' },
+          { id: '3', name: '电商平台项目', description: '电商平台接口与UI自动化测试', status: '启用', memberCount: 4, caseCount: 567, createdAt: '2026-07-10 09:00' },
+          { id: '4', name: 'OA办公系统', description: '办公自动化系统测试', status: '禁用', memberCount: 2, caseCount: 128, createdAt: '2026-07-15 11:00' }
+        ]
+        if (!currentProjectId.value) {
+          currentProjectId.value = '1'
+        }
       }
     } finally {
       loading.value = false

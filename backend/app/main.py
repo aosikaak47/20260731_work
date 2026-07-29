@@ -788,7 +788,26 @@ async def add_project(request: Request):
         data = await request.json()
         projects = load_projects()
         
-        new_id = str(max([int(p["id"]) for p in projects]) + 1) if projects else "1"
+        # 检查自定义ID是否重复
+        custom_id = data.get("id", "").strip()
+        if custom_id:
+            # 校验唯一性
+            if any(p["id"] == custom_id for p in projects):
+                return JSONResponse({
+                    "success": False,
+                    "message": f"项目ID '{custom_id}' 已存在，请使用其他ID"
+                }, status_code=400)
+            new_id = custom_id
+        else:
+            # 自动生成ID - 找出最大数字ID并加1
+            numeric_ids = []
+            for p in projects:
+                try:
+                    numeric_ids.append(int(p["id"]))
+                except (ValueError, TypeError):
+                    pass
+            new_id = str(max(numeric_ids) + 1) if numeric_ids else "1"
+        
         new_project = {
             "id": new_id,
             "name": data.get("name", ""),
@@ -804,6 +823,16 @@ async def add_project(request: Request):
         save_projects(projects)
         
         return JSONResponse({"success": True, "message": "项目创建成功", "project": new_project})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/projects/check-id/{project_id}")
+async def check_project_id(project_id: str):
+    """检查项目ID是否已存在"""
+    try:
+        projects = load_projects()
+        exists = any(p["id"] == project_id for p in projects)
+        return JSONResponse({"exists": exists, "available": not exists})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -66,6 +66,12 @@
 
     <el-dialog v-model="dialogVisible" :title="editingProject ? '编辑项目' : '新建项目'" width="500px">
       <el-form :model="projectForm" label-width="100px">
+        <el-form-item label="项目ID" v-if="!editingProject">
+          <el-input v-model="projectForm.id" placeholder="留空自动生成，或输入自定义ID" @blur="checkIdAvailability" />
+          <div v-if="idStatus === 'checking'" class="id-status checking">检查中...</div>
+          <div v-else-if="idStatus === 'available'" class="id-status available">✓ ID可用</div>
+          <div v-else-if="idStatus === 'exists'" class="id-status exists">✗ ID已存在，请更换</div>
+        </el-form-item>
         <el-form-item label="项目名称" required>
           <el-input v-model="projectForm.name" placeholder="请输入项目名称" />
         </el-form-item>
@@ -104,11 +110,14 @@ const dialogVisible = ref(false)
 const editingProject = ref(null)
 
 const projectForm = reactive({
+  id: '',
   name: '',
   description: '',
   status: '启用',
   memberCount: 0
 })
+
+const idStatus = ref('') // '' | 'checking' | 'available' | 'exists'
 
 const filteredProjects = computed(() => {
   let result = projects.value
@@ -124,25 +133,52 @@ const filteredProjects = computed(() => {
 
 const handleAdd = () => {
   editingProject.value = null
+  projectForm.id = ''
   projectForm.name = ''
   projectForm.description = ''
   projectForm.status = '启用'
   projectForm.memberCount = 0
+  idStatus.value = ''
   dialogVisible.value = true
+}
+
+const checkIdAvailability = async () => {
+  if (!projectForm.id.trim()) {
+    idStatus.value = ''
+    return
+  }
+  
+  idStatus.value = 'checking'
+  try {
+    const response = await fetch(`/api/v1/projects/check-id/${projectForm.id}`)
+    const data = await response.json()
+    idStatus.value = data.available ? 'available' : 'exists'
+  } catch (error) {
+    console.error('检查ID失败:', error)
+    idStatus.value = ''
+  }
 }
 
 const handleEdit = (row) => {
   editingProject.value = row
+  projectForm.id = row.id
   projectForm.name = row.name
   projectForm.description = row.description || ''
   projectForm.status = row.status
   projectForm.memberCount = row.memberCount || 0
+  idStatus.value = ''
   dialogVisible.value = true
 }
 
 const handleSave = async () => {
   if (!projectForm.name) {
     ElMessage.warning('请输入项目名称')
+    return
+  }
+  
+  // 检查自定义ID是否已存在
+  if (!editingProject.value && projectForm.id.trim() && idStatus.value === 'exists') {
+    ElMessage.error('项目ID已存在，请更换')
     return
   }
   
@@ -153,17 +189,25 @@ const handleSave = async () => {
     memberCount: projectForm.memberCount
   }
   
+  if (!editingProject.value && projectForm.id.trim()) {
+    payload.id = projectForm.id.trim()
+  }
+  
   if (editingProject.value) {
     const result = await updateProject(editingProject.value.id, payload)
     if (result) {
       ElMessage.success('项目更新成功')
       dialogVisible.value = false
+      await loadProjects(true) // 强制刷新页面
     }
   } else {
     const result = await addProject(payload)
     if (result) {
       ElMessage.success('项目创建成功')
       dialogVisible.value = false
+      await loadProjects(true) // 强制刷新页面
+    } else {
+      ElMessage.error('项目创建失败')
     }
   }
 }
@@ -188,6 +232,7 @@ const handleDelete = async (row) => {
     const success = await deleteProject(row.id)
     if (success) {
       ElMessage.success('项目删除成功')
+      await loadProjects(true) // 强制刷新页面
     }
   } catch {
     // User cancelled
@@ -245,5 +290,22 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
+}
+
+.id-status {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.id-status.checking {
+  color: #909399;
+}
+
+.id-status.available {
+  color: #67c23a;
+}
+
+.id-status.exists {
+  color: #f56c6c;
 }
 </style>
