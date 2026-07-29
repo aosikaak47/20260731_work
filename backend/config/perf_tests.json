@@ -9,8 +9,8 @@
     "protocol": "HTTP",
     "concurrency": 100,
     "ramp_up": 10,
-    "duration": 300,
-    "max_vusers": 100,
+    "duration": 1,
+    "max_vusers": 1,
     "think_time": 0,
     "status": "running",
     "priority": "high",
@@ -18,7 +18,7 @@
       "登录",
       "核心链路"
     ],
-    "headers": "Content-Type:application/json;charset=UTF-8\nX-Access-Token:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXNzd29yZCI6IjJhNWU5MjI1ZGZlNmZiZWIiLCJleHAiOjE3ODQ4NTYxNDksInVzZXJuYW1lIjoiYWRtaW4ifQ.N5zfZU4vHY8Bc84bXKrS_vqlhLLY9b-jOjN8hNqqKVM\n\n",
+    "headers": "Content-Type:application/json;charset=UTF-8\nX-Access-Token:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXNzd29yZCI6IjJhNWU5MjI1ZGZlNmZiZWIiLCJleHAiOjE3ODUyMjc5MjQsInVzZXJuYW1lIjoiYWRtaW4ifQ.RN4G-FIxxPJP6rN-mU8pfvApCk3YwdWM-0ay9kn-8jo\n",
     "body": "{\"tableName\":\"diversified_tandards_library\",\"pageSize\":10,\"pageNo\":1,\"map\":{\"contents_guid\":\"1\"},\"roleCode\":\"admin\"}",
     "assertions": [
       {
@@ -28,10 +28,10 @@
       }
     ],
     "created_at": "2026-07-20 10:00:00",
-    "updated_at": "2026-07-25 23:48:41",
+    "updated_at": "2026-07-28 16:40:50",
     "created_by": "admin",
-    "last_run": "2026-07-25 23:49:16",
-    "last_run_id": "pr_001_584"
+    "last_run": "2026-07-28 16:16:36",
+    "last_run_id": "pr_001_465"
   },
   {
     "id": "pt_002",
@@ -162,5 +162,40 @@
     "created_by": "wangwu",
     "last_run": "2026-07-18 11:30:00",
     "last_run_id": "pr_003"
+  },
+  {
+    "name": "AI生成场景_3_中强度_分页查询待审核考核任务",
+    "project_id": "6",
+    "target_url": "/jzgkh/assessmentTask/queryPageExamine",
+    "method": "GET",
+    "concurrency": 89,
+    "ramp_up": 10,
+    "duration": 300,
+    "think_time": 100,
+    "intensity": "中强度",
+    "target_type": "业务流程",
+    "priority": "medium",
+    "id": "pt_006",
+    "created_at": "2026-07-28 16:18:47",
+    "updated_at": "2026-07-28 16:18:47",
+    "status": "running",
+    "last_run": "2026-07-28 16:19:02",
+    "last_run_id": "pr_006_605"
+  },
+  {
+    "name": "test-debug",
+    "project_id": "1",
+    "target_url": "http://httpbin.org/get",
+    "method": "GET",
+    "protocol": "HTTPS",
+    "concurrency": 10,
+    "duration": 30,
+    "priority": "medium",
+    "id": "pt_007",
+    "created_at": "2026-07-28 16:35:54",
+    "updated_at": "2026-07-28 16:35:54",
+    "status": "draft",
+    "last_run": null,
+    "last_run_id": null
   }
 ]

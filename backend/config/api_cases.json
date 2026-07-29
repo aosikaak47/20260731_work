@@ -1081,5 +1081,78 @@
     "swagger_api_id": "d40ce37f-710d-4cbe-9a79-509b56c06b8f",
     "created_at": "2026-07-28 13:33",
     "updated_at": "2026-07-28 13:38"
+  },
+  {
+    "id": "5ac80719-7936-4302-b8dc-0f8a170ab756",
+    "name": "分页查询待审核考核任务",
+    "method": "GET",
+    "url": "/jzgkh/assessmentTask/queryPageExamine",
+    "module": "考核任务模块",
+    "project_id": "7",
+    "environment_id": "2",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "key": "queryType",
+        "value": "queryType",
+        "description": "查询类型，示例值：all 查询全部"
+      },
+      {
+        "key": "pageNo",
+        "value": 1,
+        "description": "当前页码"
+      },
+      {
+        "key": "pageSize",
+        "value": 1,
+        "description": "每页条数"
+      }
+    ],
+    "body": "",
+    "body_type": "none",
+    "assertions": [
+      {
+        "type": "status_code",
+        "expected": 200,
+        "operator": "=="
+      },
+      {
+        "type": "json_path",
+        "field": "code",
+        "expected": 0,
+        "operator": "=="
+      }
+    ],
+    "status": "已启用",
+    "source": "swagger",
+    "swagger_api_id": "3c06cf44-b0eb-4432-bec8-cc7e9c1acc68",
+    "created_at": "2026-07-28 15:58",
+    "updated_at": "2026-07-28 15:58"
+  },
+  {
+    "id": "74c2558c-7da9-488c-8c54-9709df908c5a",
+    "name": "/prod-api/table/getTable",
+    "method": "POST",
+    "url": "/prod-api/table/getTable",
+    "module": "",
+    "project_id": "5",
+    "environment_id": "8e350042-7442-44a9-a4e6-eba0fd2fa355",
+    "headers": [],
+    "params": [],
+    "body": "{\"tableName\":\"diversified_tandards_library\",\"pageSize\":10,\"pageNo\":1,\"map\":{\"contents_guid\":\"1\"},\"roleCode\":\"admin\"}",
+    "body_type": "json",
+    "assertions": [],
+    "status": "已启用",
+    "created_at": "2026-07-28 16:16",
+    "updated_at": "2026-07-28 16:16"
   }
 ]

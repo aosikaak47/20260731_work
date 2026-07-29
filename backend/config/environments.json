@@ -82,5 +82,26 @@
     "headers": [],
     "created_at": "2026-07-20 11:30",
     "updated_at": "2026-07-20 11:30"
+  },
+  {
+    "id": "8e350042-7442-44a9-a4e6-eba0fd2fa355",
+    "name": "教师发展与分析服务",
+    "base_url": "http://192.168.100.61:7275",
+    "status": "启用",
+    "timeout": 30,
+    "retry": 3,
+    "variables": [],
+    "headers": [
+      {
+        "key": "X-Access-Token",
+        "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXNzd29yZCI6IjJhNWU5MjI1ZGZlNmZiZWIiLCJleHAiOjE3ODUyMjc5MjQsInVzZXJuYW1lIjoiYWRtaW4ifQ.RN4G-FIxxPJP6rN-mU8pfvApCk3YwdWM-0ay9kn-8jo"
+      },
+      {
+        "key": "Content-Type",
+        "value": "application/json;charset=UTF-8"
+      }
+    ],
+    "created_at": "2026-07-28 16:14",
+    "updated_at": "2026-07-28 16:14"
   }
 ]

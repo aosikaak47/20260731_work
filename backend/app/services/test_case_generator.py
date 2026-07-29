@@ -91,7 +91,19 @@ class TestCaseGenerator:
     def _init_ai_service(self):
         try:
             from .ai_service import AIService
-            self.ai_service = AIService()
+            import os
+            import json
+            
+            config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "config", "ai_config.json")
+            config = {}
+            if os.path.exists(config_path):
+                try:
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                except Exception:
+                    pass
+            
+            self.ai_service = AIService(config)
         except Exception as e:
             print(f"AI服务初始化失败: {str(e)}")
             self.ai_service = None

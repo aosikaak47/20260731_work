@@ -1563,28 +1563,18 @@ const handleGenerate = async () => {
         }
       })
     } else {
-      cases = [
-        { id: '1', case_id: 'TC-LOG-001', name: '正确账号密码登录成功', module: '用户登录与认证', feature: '账号密码登录', test_type: '功能', priority: 'P0', preconditions: '账号已注册且系统正常', steps: ['打开登录页', '输入正确用户名testuser', '输入正确密码123456', '点击登录按钮'], expected_result: '跳转首页，显示用户昵称', remark: '需求原文3.2节「登录功能」', status: '未执行' },
-        { id: '2', case_id: 'TC-LOG-002', name: '错误密码登录失败提示', module: '用户登录与认证', feature: '账号密码登录', test_type: '异常', priority: 'P0', preconditions: '账号存在', steps: ['输入正确账号', '输入错误密码', '点击登录'], expected_result: '提示「账号或密码错误」，不跳转', remark: '需求原文3.2节「登录异常处理」', status: '未执行' },
-        { id: '3', case_id: 'TC-LOG-003', name: '连续5次失败锁定账号', module: '用户登录与认证', feature: '登录失败锁定', test_type: '异常', priority: 'P0', preconditions: '账号未锁定', steps: ['连续5次输入错误密码'], expected_result: '5次后提示账号锁定15分钟', remark: '需求原文3.3节「安全策略」', status: '未执行' },
-        { id: '4', case_id: 'TC-LOG-004', name: '用户名为空时提交校验', module: '用户登录与认证', feature: '账号密码登录', test_type: '边界', priority: 'P1', preconditions: '登录页已打开', steps: ['用户名留空', '输入任意密码', '点击登录'], expected_result: '提示「请输入用户名」', remark: '需求原文3.2节', status: '未执行' },
-        { id: '5', case_id: 'TC-LOG-005', name: '用户名长度边界校验', module: '用户登录与认证', feature: '账号密码登录', test_type: '边界', priority: 'P1', preconditions: '登录页已打开', steps: ['输入2位用户名', '输入21位用户名', '分别提交'], expected_result: '2位提示太短，21位提示超长', remark: '字段约束：3-20位', status: '未执行' },
-        { id: '6', case_id: 'TC-LOG-006', name: '密码特殊字符校验', module: '用户登录与认证', feature: '账号密码登录', test_type: '边界', priority: 'P2', preconditions: '登录页已打开', steps: ['输入包含特殊字符的密码', '提交登录'], expected_result: '特殊字符正常处理，不报错', remark: '交互场景', status: '未执行' },
-        { id: '7', case_id: 'TC-LOG-007', name: '验证码刷新功能', module: '用户登录与认证', feature: '验证码验证', test_type: '交互', priority: 'P1', preconditions: '登录页面已打开', steps: ['点击验证码刷新按钮'], expected_result: '验证码图片更新，倒计时重置', remark: '截图点位：登录页验证码区', status: '未执行' },
-        { id: '8', case_id: 'TC-LOG-008', name: '验证码错误登录失败', module: '用户登录与认证', feature: '验证码验证', test_type: '异常', priority: 'P1', preconditions: '账号密码正确', steps: ['输入错误验证码', '点击登录'], expected_result: '提示验证码错误', remark: '需求原文3.4节', status: '未执行' },
-        { id: '9', case_id: 'TC-EXAM-001', name: '考试正常答题提交', module: '考试作答', feature: '考试答题', test_type: '功能', priority: 'P0', preconditions: '已登录系统，进入考试页面', steps: ['选择答案', '点击提交按钮'], expected_result: '答题成功，显示成绩', remark: '需求原文4.1节', status: '未执行' },
-        { id: '10', case_id: 'TC-EXAM-002', name: '考试超时自动提交', module: '考试作答', feature: '考试答题', test_type: '边界', priority: 'P0', preconditions: '已登录系统，进入考试页面', steps: ['等待考试时间结束不操作'], expected_result: '系统自动提交试卷并保存答案', remark: '需求原文4.2节「时间管理」', status: '未执行' },
-        { id: '11', case_id: 'TC-EXAM-003', name: '答题空值提交校验', module: '考试作答', feature: '考试答题', test_type: '异常', priority: 'P1', preconditions: '已登录系统，进入考试页面', steps: ['不选择任何答案', '点击提交'], expected_result: '提示「还有N题未作答」', remark: '交互场景', status: '未执行' },
-        { id: '12', case_id: 'TC-EXAM-004', name: '考试切屏检测', module: '考试作答', feature: '考试监控', test_type: '交互', priority: 'P0', preconditions: '已登录系统，进入考试页面', steps: ['考试过程中切换到其他应用窗口'], expected_result: '系统记录切屏行为，超过3次触发警告', remark: '需求原文5.1节「防作弊」', status: '未执行' },
-        { id: '13', case_id: 'TC-SCORE-001', name: '成绩查询正常流程', module: '成绩统计', feature: '成绩查询', test_type: '功能', priority: 'P1', preconditions: '考试已结束', steps: ['进入成绩查询页面', '选择考试记录', '查看成绩详情'], expected_result: '显示考试成绩、正确率、用时', remark: '需求原文6.1节', status: '未执行' },
-        { id: '14', case_id: 'TC-SCORE-002', name: '成绩排名统计', module: '成绩统计', feature: '成绩统计', test_type: '功能', priority: 'P1', preconditions: '考试已结束', steps: ['进入排名页面', '查看考生排名'], expected_result: '显示考生排名、分数段分布', remark: '需求原文6.2节', status: '未执行' },
-        { id: '15', case_id: 'TC-SEC-001', name: '同账号多IP登录检测', module: '防作弊', feature: '作弊检测', test_type: '权限', priority: 'P0', preconditions: '系统正常运行', steps: ['同一账号在不同IP设备同时登录'], expected_result: '系统检测到异常，发送告警通知', remark: '需求原文5.2节「异常检测」', status: '未执行' },
-        { id: '16', case_id: 'TC-SEC-002', name: '账号权限校验', module: '防作弊', feature: '权限管理', test_type: '权限', priority: 'P1', preconditions: '普通用户账号', steps: ['尝试访问管理员页面'], expected_result: '提示无权限，页面跳转至403', remark: '需求原文7.1节', status: '未执行' },
-        { id: '17', case_id: 'TC-API-001', name: '登录接口返回正确Token', module: '接口测试', feature: '登录接口', test_type: '接口', priority: 'P0', preconditions: 'API服务正常', steps: ['POST /api/login', '传入正确账号密码'], expected_result: '返回200状态码和JWT Token', remark: '接口文档-登录接口', status: '未执行' },
-        { id: '18', case_id: 'TC-API-002', name: '接口参数校验异常处理', module: '接口测试', feature: '接口校验', test_type: '异常', priority: 'P1', preconditions: 'API服务正常', steps: ['POST /api/login', '传入空参数'], expected_result: '返回400状态码和错误提示', remark: '接口文档-错误码规范', status: '未执行' },
-        { id: '19', case_id: 'TC-UX-001', name: '表单重复提交防抖', module: '交互体验', feature: '表单交互', test_type: '交互', priority: 'P2', preconditions: '网络较慢', steps: ['快速连续点击提交按钮'], expected_result: '按钮在提交期间禁用，请求只发一次', remark: '截图点位：提交按钮', status: '未执行' },
-        { id: '20', case_id: 'TC-UX-002', name: '弹窗确认取消操作', module: '交互体验', feature: '弹窗交互', test_type: '交互', priority: 'P1', preconditions: '执行删除操作', steps: ['点击删除按钮', '弹窗点击取消'], expected_result: '不执行删除，数据保留', remark: '截图点位：确认弹窗', status: '未执行' }
-      ]
+      const generationMode = data?.generation_mode || ''
+      const analysisError = data?.analysis?.error || ''
+      
+      if (generationMode === 'rule' || generationMode === '') {
+        ElMessage.warning('AI服务未启用，当前使用规则模板生成。请在"平台设置 > AI配置"中配置API Key')
+      } else if (analysisError) {
+        ElMessage.error(`AI生成失败: ${analysisError}`)
+      } else {
+        ElMessage.warning('AI生成结果为空，已回退到规则模板生成')
+      }
+      
+      cases = []
     }
     
     await new Promise(r => setTimeout(r, 500))
@@ -1592,23 +1582,30 @@ const handleGenerate = async () => {
     
     testCases.value = cases
     
-    features.value = [
-      { name: '用户登录', module: '用户登录与认证', description: '用户通过用户名密码登录系统', casesCount: 6, coverage: 100 },
-      { name: '验证码验证', module: '用户登录与认证', description: '登录时进行验证码验证', casesCount: 2, coverage: 100 },
-      { name: '考试答题', module: '考试作答', description: '在线答题、答案提交', casesCount: 4, coverage: 100 },
-      { name: '考试监控', module: '考试作答', description: '考试过程监控、防作弊', casesCount: 1, coverage: 100 },
-      { name: '成绩查询', module: '成绩统计', description: '查询个人考试成绩', casesCount: 1, coverage: 100 },
-      { name: '作弊检测', module: '防作弊', description: '异常行为检测、作弊判定', casesCount: 2, coverage: 100 },
-      { name: '接口服务', module: '接口测试', description: '提供RESTful API接口', casesCount: 2, coverage: 100 },
-      { name: '交互体验', module: '交互体验', description: '表单交互、弹窗交互', casesCount: 2, coverage: 100 }
-    ]
+    const analysis = data?.analysis || {}
+    const coverage = data?.coverage || {}
     
-    boundaries.value = [
-      { name: '用户名长度边界', module: '用户登录与认证', description: '用户名最小3位，最大20位', type: '长度' },
-      { name: '密码长度边界', module: '用户登录与认证', description: '密码最小6位，最大32位', type: '长度' },
-      { name: '考试时间边界', module: '考试作答', description: '考试时间最长180分钟', type: '时间' },
-      { name: '答题数量边界', module: '考试作答', description: '单次考试最多500道题', type: '数量' }
-    ]
+    if (analysis.features && Array.isArray(analysis.features)) {
+      features.value = analysis.features
+    } else {
+      const moduleGroups = {}
+      cases.forEach(c => {
+        const m = c.module || '其他'
+        if (!moduleGroups[m]) moduleGroups[m] = { name: m, module: m, description: '', casesCount: 0, coverage: 0 }
+        moduleGroups[m].casesCount++
+      })
+      features.value = Object.values(moduleGroups)
+    }
+    
+    if (analysis.boundaries && Array.isArray(analysis.boundaries)) {
+      boundaries.value = analysis.boundaries
+    } else {
+      boundaries.value = []
+    }
+    
+    if (coverage?.coverage_rate !== undefined) {
+      coverageStats.rate = coverage.coverage_rate
+    }
     
     await new Promise(r => setTimeout(r, 300))
     generateStep.value = 5

@@ -34,6 +34,10 @@ export_service = ExportService()
 config_service = ConfigService()
 swagger_test_generator = SwaggerTestGenerator()
 
+if test_case_generator.ai_service:
+    raw_config = config_service.get_raw_config()
+    test_case_generator.ai_service.update_config(raw_config)
+
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -3892,6 +3896,105 @@ async def execute_perf_test(test_id: str):
         test["last_run_id"] = report_id
         save_perf_tests(tests)
         return JSONResponse({"success": True, "report_id": report_id, "report": report})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/perf/tests/{test_id}/debug")
+async def debug_perf_test(test_id: str, request: Request):
+    try:
+        data = await request.json()
+        tests = load_perf_tests()
+        test = next((t for t in tests if t["id"] == test_id), None)
+        if not test:
+            raise HTTPException(status_code=404, detail="性能测试不存在")
+        
+        method = data.get("method", test.get("method", "GET"))
+        protocol = data.get("protocol", test.get("protocol", "HTTPS"))
+        target_url = data.get("target_url", test.get("target_url", ""))
+        headers_str = data.get("headers", test.get("headers", ""))
+        body = data.get("body", test.get("body", ""))
+        
+        if not target_url:
+            raise HTTPException(status_code=400, detail="目标URL不能为空")
+        
+        full_url = f"{protocol}://{target_url}"
+        if not full_url.startswith("http://") and not full_url.startswith("https://"):
+            full_url = f"https://{target_url}"
+        
+        headers = {}
+        if headers_str:
+            try:
+                parsed_headers = json.loads(headers_str)
+                if isinstance(parsed_headers, dict):
+                    headers = parsed_headers
+            except:
+                for line in headers_str.split("\n"):
+                    if ":" in line:
+                        key, value = line.split(":", 1)
+                        headers[key.strip()] = value.strip()
+        
+        import requests as req
+        
+        body_data = None
+        if body and method in ["POST", "PUT", "PATCH"]:
+            try:
+                body_data = json.loads(body)
+            except:
+                body_data = body
+        
+        timeout_val = 30
+        
+        try:
+            start_time = datetime.now()
+            response = req.request(
+                method=method,
+                url=full_url,
+                headers=headers,
+                json=body_data if body and body.strip().startswith("{") else None,
+                data=body if body and not body.strip().startswith("{") else None,
+                timeout=timeout_val,
+                allow_redirects=True
+            )
+            elapsed = (datetime.now() - start_time).total_seconds() * 1000
+            
+            response_headers = dict(response.headers)
+            decoded_text = decode_response_body(response)
+            try:
+                response_body = json.loads(decoded_text)
+                body_type = "json"
+            except:
+                response_body = decoded_text
+                body_type = "text"
+            
+            return JSONResponse({
+                "success": True,
+                "response": {
+                    "status_code": response.status_code,
+                    "status_text": response.reason,
+                    "headers": response_headers,
+                    "body": response_body,
+                    "body_type": body_type,
+                    "time": round(elapsed, 2),
+                    "size": len(response.content)
+                }
+            })
+        except req.exceptions.Timeout:
+            return JSONResponse({
+                "success": False,
+                "error": "请求超时，请检查网络或增加超时时间"
+            }, status_code=504)
+        except req.exceptions.ConnectionError as e:
+            return JSONResponse({
+                "success": False,
+                "error": f"连接失败: {str(e)}"
+            }, status_code=502)
+        except Exception as e:
+            return JSONResponse({
+                "success": False,
+                "error": f"请求失败: {str(e)}"
+            }, status_code=500)
     except HTTPException:
         raise
     except Exception as e:

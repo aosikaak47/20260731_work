@@ -127,7 +127,7 @@
             <span v-else class="text-muted">未执行</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" class-name="action-cell" fixed="right">
+        <el-table-column label="操作" width="320" class-name="action-cell" fixed="right">
           <template #default="scope">
             <div class="action-btns">
               <el-button
@@ -138,6 +138,10 @@
               >
                 <el-icon v-if="executingId !== scope.row.id"><component :is="icons.VideoPlay" /></el-icon>
                 执行
+              </el-button>
+              <el-button size="small" type="warning" @click="handleDebug(scope.row)">
+                <el-icon><component :is="icons.Connection" /></el-icon>
+                调试
               </el-button>
               <el-button size="small" @click="handleEdit(scope.row)">
                 <el-icon><component :is="icons.Edit" /></el-icon>
@@ -261,6 +265,102 @@
         <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="debugVisible" title="接口调试" width="850px" :close-on-click-modal="false">
+      <div class="debug-container">
+        <el-tabs v-model="debugActiveTab">
+          <el-tab-pane label="请求配置" name="request">
+            <div class="debug-request-config">
+              <div class="request-line">
+                <el-select v-model="debugForm.method" class="debug-method">
+                  <el-option label="GET" value="GET" />
+                  <el-option label="POST" value="POST" />
+                  <el-option label="PUT" value="PUT" />
+                  <el-option label="DELETE" value="DELETE" />
+                  <el-option label="PATCH" value="PATCH" />
+                </el-select>
+                <el-select v-model="debugForm.protocol" class="debug-protocol">
+                  <el-option label="HTTP" value="HTTP" />
+                  <el-option label="HTTPS" value="HTTPS" />
+                </el-select>
+                <el-input v-model="debugForm.target_url" placeholder="目标URL" class="debug-url" />
+              </div>
+              
+              <el-divider />
+              
+              <div class="request-section">
+                <h4>请求头 (JSON格式)</h4>
+                <el-input
+                  v-model="debugForm.headers"
+                  type="textarea"
+                  :rows="4"
+                  placeholder='{"Content-Type": "application/json", "Authorization": "Bearer xxx"}'
+                />
+              </div>
+              
+              <div class="request-section" v-if="['POST', 'PUT', 'PATCH'].includes(debugForm.method)">
+                <h4>请求体</h4>
+                <el-input
+                  v-model="debugForm.body"
+                  type="textarea"
+                  :rows="6"
+                  placeholder='{"key": "value"}'
+                />
+              </div>
+              
+              <div class="debug-actions">
+                <el-button type="primary" @click="runDebug" :loading="debugLoading">
+                  <el-icon><component :is="icons.Promotion" /></el-icon>
+                  发送请求
+                </el-button>
+                <el-button @click="resetDebugForm">重置</el-button>
+              </div>
+            </div>
+          </el-tab-pane>
+          
+          <el-tab-pane label="响应结果" name="response">
+            <div class="debug-response">
+              <div v-if="debugResult" class="response-result">
+                <div class="response-header">
+                  <el-tag 
+                    :type="debugResult.status_code >= 200 && debugResult.status_code < 300 ? 'success' : 'danger'"
+                    size="large"
+                  >
+                    {{ debugResult.status_code }} {{ debugResult.status_text }}
+                  </el-tag>
+                  <span class="response-time">耗时: {{ debugResult.time }}ms</span>
+                  <span class="response-size">大小: {{ formatSize(debugResult.size) }}</span>
+                </div>
+                
+                <el-divider />
+                
+                <div class="response-section">
+                  <h4>响应头</h4>
+                  <el-table :data="debugHeaders" size="small" border stripe max-height="200">
+                    <el-table-column prop="key" label="Header" width="200" />
+                    <el-table-column prop="value" label="Value" show-overflow-tooltip />
+                  </el-table>
+                </div>
+                
+                <div class="response-section">
+                  <h4>响应体</h4>
+                  <pre class="code-block">{{ formatResponse(debugResult.body, debugResult.body_type) }}</pre>
+                </div>
+              </div>
+              <div v-else-if="debugError" class="debug-error">
+                <el-icon :size="48" color="#F56C6C"><component :is="icons.Warning" /></el-icon>
+                <p class="error-title">请求失败</p>
+                <p class="error-message">{{ debugError }}</p>
+              </div>
+              <div v-else class="empty-response">
+                <el-icon :size="48" color="#909399"><component :is="icons.Document" /></el-icon>
+                <p>点击"发送请求"查看响应结果</p>
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -271,12 +371,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useProjects } from '../composables/useProjects'
 import {
   Plus, Search, Refresh, Delete, Edit, VideoPlay,
-  DataLine, Lightning, Odometer, Document
+  DataLine, Lightning, Odometer, Document,
+  Connection, Promotion, Warning
 } from '@element-plus/icons-vue'
 
 const icons = {
   Plus, Search, Refresh, Delete, Edit, VideoPlay,
-  DataLine, Lightning, Odometer, Document
+  DataLine, Lightning, Odometer, Document,
+  Connection, Promotion, Warning
 }
 
 const { projects, loadProjects } = useProjects()
@@ -296,6 +398,31 @@ const filters = reactive({
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const editingId = ref(null)
+
+const debugVisible = ref(false)
+const debugActiveTab = ref('request')
+const debugLoading = ref(false)
+const debugResult = ref(null)
+const debugError = ref('')
+const debugTestId = ref(null)
+
+const defaultDebugForm = () => ({
+  method: 'GET',
+  protocol: 'HTTPS',
+  target_url: '',
+  headers: '{\n  "Content-Type": "application/json"\n}',
+  body: ''
+})
+
+const debugForm = reactive(defaultDebugForm())
+
+const debugHeaders = computed(() => {
+  if (!debugResult.value?.headers) return []
+  return Object.entries(debugResult.value.headers).map(([key, value]) => ({
+    key,
+    value: String(value)
+  }))
+})
 
 const statusChartRef = ref(null)
 let statusChartInstance = null
@@ -552,6 +679,98 @@ const handleDelete = (row) => {
   }).catch(() => {})
 }
 
+const handleDebug = (row) => {
+  debugTestId.value = row.id
+  debugResult.value = null
+  debugError.value = ''
+  debugActiveTab.value = 'request'
+  
+  Object.assign(debugForm, {
+    method: row.method || 'GET',
+    protocol: row.protocol || 'HTTPS',
+    target_url: row.target_url || '',
+    headers: row.headers || '{\n  "Content-Type": "application/json"\n}',
+    body: row.body || ''
+  })
+  
+  debugVisible.value = true
+}
+
+const resetDebugForm = () => {
+  Object.assign(debugForm, defaultDebugForm())
+  debugResult.value = null
+  debugError.value = ''
+}
+
+const runDebug = async () => {
+  if (!debugForm.target_url) {
+    ElMessage.warning('请输入目标URL')
+    return
+  }
+  
+  debugLoading.value = true
+  debugResult.value = null
+  debugError.value = ''
+  
+  try {
+    const res = await fetch(`/api/v1/perf/tests/${debugTestId.value}/debug`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method: debugForm.method,
+        protocol: debugForm.protocol,
+        target_url: debugForm.target_url,
+        headers: debugForm.headers,
+        body: debugForm.body
+      })
+    })
+    
+    const json = await res.json()
+    
+    if (json.success) {
+      debugResult.value = json.response
+      debugActiveTab.value = 'response'
+      ElMessage.success(`请求成功，状态码: ${json.response.status_code}`)
+    } else {
+      debugError.value = json.error || '请求失败'
+      debugActiveTab.value = 'response'
+      ElMessage.error(debugError.value)
+    }
+  } catch (e) {
+    console.error('调试请求失败:', e)
+    debugError.value = '网络错误或请求超时'
+    debugActiveTab.value = 'response'
+  } finally {
+    debugLoading.value = false
+  }
+}
+
+const formatResponse = (body, bodyType) => {
+  if (!body) return '(空)'
+  if (bodyType === 'json' && typeof body === 'object') {
+    try {
+      return JSON.stringify(body, null, 2)
+    } catch {
+      return String(body)
+    }
+  }
+  if (typeof body === 'object') {
+    try {
+      return JSON.stringify(body, null, 2)
+    } catch {
+      return String(body)
+    }
+  }
+  return String(body)
+}
+
+const formatSize = (bytes) => {
+  if (!bytes) return '0 B'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+}
+
 onMounted(async () => {
   await loadProjects()
   initStatusChart()
@@ -712,6 +931,118 @@ onUnmounted(() => {
 
 .perf-form :deep(.el-input-number) {
   width: 100%;
+}
+
+.debug-container {
+  padding: 0;
+}
+
+.debug-request-config {
+  padding: 10px 0;
+}
+
+.request-line {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.debug-method {
+  width: 120px;
+}
+
+.debug-protocol {
+  width: 110px;
+}
+
+.debug-url {
+  flex: 1;
+}
+
+.request-section {
+  margin-bottom: 16px;
+}
+
+.request-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.debug-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.debug-response {
+  min-height: 200px;
+}
+
+.response-result {
+  width: 100%;
+}
+
+.response-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.response-time,
+.response-size {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.response-section {
+  margin-bottom: 16px;
+}
+
+.response-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.code-block {
+  background: #1f2937;
+  color: #e5e7eb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-family: 'Menlo', 'Consolas', 'Monaco', monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  max-height: 350px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
+
+.empty-response,
+.debug-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.error-title {
+  color: #ef4444;
+  font-weight: 600;
+  margin: 12px 0 4px;
+}
+
+.error-message {
+  color: #6b7280;
+  font-size: 13px;
 }
 
 @media (max-width: 768px) {

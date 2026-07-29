@@ -39,7 +39,16 @@
     "jira": {"enabled": false, "url": "", "token": ""},
     "slack": {"enabled": false, "webhook": ""},
     "grafana": {"enabled": true, "url": "http://localhost:3000", "dashboard": "perf-dashboard"},
-    "prometheus": {"enabled": true, "url": "http://localhost:9090"}
+    "prometheus": {"enabled": true, "url": "http://localhost:9090"},
+    "zentao": {
+      "enabled": false,
+      "url": "",
+      "account": "",
+      "password": "",
+      "project": "",
+      "default_severity": 3,
+      "default_priority": 3
+    }
   },
   "security": {
     "session_timeout": 30,
