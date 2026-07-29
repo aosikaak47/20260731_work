@@ -2,12 +2,12 @@
   {
     "id": "pt_001",
     "name": "正常文件库查询压测",
-    "project_id": "4",
+    "project_id": "5",
     "project_name": "智能测试平台",
-    "target_url": "http://192.168.100.61:7275/prod-api/table/getTable",
+    "target_url": "192.168.100.61:7275/prod-api/table/getTable",
     "method": "POST",
     "protocol": "HTTP",
-    "concurrency": 100,
+    "concurrency": 1,
     "ramp_up": 10,
     "duration": 1,
     "max_vusers": 1,
@@ -15,8 +15,7 @@
     "status": "running",
     "priority": "high",
     "tags": [
-      "登录",
-      "核心链路"
+      "查询"
     ],
     "headers": "Content-Type:application/json;charset=UTF-8\nX-Access-Token:eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXNzd29yZCI6IjJhNWU5MjI1ZGZlNmZiZWIiLCJleHAiOjE3ODUyMjc5MjQsInVzZXJuYW1lIjoiYWRtaW4ifQ.RN4G-FIxxPJP6rN-mU8pfvApCk3YwdWM-0ay9kn-8jo\n",
     "body": "{\"tableName\":\"diversified_tandards_library\",\"pageSize\":10,\"pageNo\":1,\"map\":{\"contents_guid\":\"1\"},\"roleCode\":\"admin\"}",
@@ -28,174 +27,9 @@
       }
     ],
     "created_at": "2026-07-20 10:00:00",
-    "updated_at": "2026-07-28 16:40:50",
+    "updated_at": "2026-07-29 14:32:07",
     "created_by": "admin",
-    "last_run": "2026-07-28 16:16:36",
-    "last_run_id": "pr_001_465"
-  },
-  {
-    "id": "pt_002",
-    "name": "商品搜索压力测试",
-    "project_id": "2",
-    "project_name": "电商系统",
-    "target_url": "http://localhost:8080/api/products/search",
-    "method": "GET",
-    "protocol": "HTTP",
-    "concurrency": 50,
-    "ramp_up": 5,
-    "duration": 180,
-    "max_vusers": 100,
-    "think_time": 500,
-    "status": "running",
-    "priority": "medium",
-    "tags": [
-      "搜索",
-      "商品"
-    ],
-    "headers": {},
-    "body": "",
-    "assertions": [],
-    "created_at": "2026-07-21 14:00:00",
-    "updated_at": "2026-07-23 15:00:00",
-    "created_by": "admin",
-    "last_run": "2026-07-23 15:00:00",
-    "last_run_id": "pr_002"
-  },
-  {
-    "id": "pt_003",
-    "name": "下单流程全链路压测",
-    "project_id": "2",
-    "project_name": "电商系统",
-    "target_url": "http://localhost:8080/api/order/create",
-    "method": "POST",
-    "protocol": "HTTP",
-    "concurrency": 200,
-    "ramp_up": 30,
-    "duration": 600,
-    "max_vusers": 500,
-    "think_time": 1000,
-    "status": "pending",
-    "priority": "high",
-    "tags": [
-      "下单",
-      "全链路",
-      "核心"
-    ],
-    "headers": {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer ${token}"
-    },
-    "body": "{\"product_id\":1,\"quantity\":1}",
-    "assertions": [
-      {
-        "type": "response_code",
-        "operator": "lt",
-        "value": "400"
-      }
-    ],
-    "created_at": "2026-07-22 09:00:00",
-    "updated_at": "2026-07-22 09:00:00",
-    "created_by": "zhangsan",
-    "last_run": null,
-    "last_run_id": null
-  },
-  {
-    "id": "pt_004",
-    "name": "支付网关稳定性测试",
-    "project_id": "2",
-    "project_name": "电商系统",
-    "target_url": "http://localhost:8080/api/payment/gateway",
-    "method": "POST",
-    "protocol": "HTTP",
-    "concurrency": 80,
-    "ramp_up": 20,
-    "duration": 1200,
-    "max_vusers": 150,
-    "think_time": 200,
-    "status": "draft",
-    "priority": "high",
-    "tags": [
-      "支付",
-      "网关"
-    ],
-    "headers": {
-      "Content-Type": "application/json"
-    },
-    "body": "{\"amount\":100,\"currency\":\"CNY\"}",
-    "assertions": [
-      {
-        "type": "response_time",
-        "operator": "lt",
-        "value": "2000"
-      }
-    ],
-    "created_at": "2026-07-22 16:00:00",
-    "updated_at": "2026-07-22 16:30:00",
-    "created_by": "lisi",
-    "last_run": null,
-    "last_run_id": null
-  },
-  {
-    "id": "pt_005",
-    "name": "用户查询接口基准测试",
-    "project_id": "1",
-    "project_name": "智能测试平台",
-    "target_url": "http://localhost:8080/api/users/list",
-    "method": "GET",
-    "protocol": "HTTP",
-    "concurrency": 20,
-    "ramp_up": 5,
-    "duration": 120,
-    "max_vusers": 50,
-    "think_time": 0,
-    "status": "completed",
-    "priority": "low",
-    "tags": [
-      "查询",
-      "基准"
-    ],
-    "headers": {},
-    "body": "",
-    "assertions": [],
-    "created_at": "2026-07-18 11:00:00",
-    "updated_at": "2026-07-18 11:30:00",
-    "created_by": "wangwu",
-    "last_run": "2026-07-18 11:30:00",
-    "last_run_id": "pr_003"
-  },
-  {
-    "name": "AI生成场景_3_中强度_分页查询待审核考核任务",
-    "project_id": "6",
-    "target_url": "/jzgkh/assessmentTask/queryPageExamine",
-    "method": "GET",
-    "concurrency": 89,
-    "ramp_up": 10,
-    "duration": 300,
-    "think_time": 100,
-    "intensity": "中强度",
-    "target_type": "业务流程",
-    "priority": "medium",
-    "id": "pt_006",
-    "created_at": "2026-07-28 16:18:47",
-    "updated_at": "2026-07-28 16:18:47",
-    "status": "running",
-    "last_run": "2026-07-28 16:19:02",
-    "last_run_id": "pr_006_605"
-  },
-  {
-    "name": "test-debug",
-    "project_id": "1",
-    "target_url": "http://httpbin.org/get",
-    "method": "GET",
-    "protocol": "HTTPS",
-    "concurrency": 10,
-    "duration": 30,
-    "priority": "medium",
-    "id": "pt_007",
-    "created_at": "2026-07-28 16:35:54",
-    "updated_at": "2026-07-28 16:35:54",
-    "status": "draft",
-    "last_run": null,
-    "last_run_id": null
+    "last_run": "2026-07-29 14:32:31",
+    "last_run_id": "pr_001_148"
   }
 ]

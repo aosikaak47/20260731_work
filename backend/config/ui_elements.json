@@ -1,0 +1,58 @@
+[
+  {
+    "id": "1",
+    "name": "用户名输入框",
+    "locator_type": "xpath",
+    "locator_value": "//input[@name='username']",
+    "page": "登录页面",
+    "project_id": "1",
+    "status": "有效",
+    "description": "登录页用户名输入框",
+    "created_at": "2026-07-20 10:00"
+  },
+  {
+    "id": "2",
+    "name": "密码输入框",
+    "locator_type": "xpath",
+    "locator_value": "//input[@name='password']",
+    "page": "登录页面",
+    "project_id": "1",
+    "status": "有效",
+    "description": "登录页密码输入框",
+    "created_at": "2026-07-20 10:00"
+  },
+  {
+    "id": "3",
+    "name": "登录按钮",
+    "locator_type": "css",
+    "locator_value": "button.login-btn",
+    "page": "登录页面",
+    "project_id": "1",
+    "status": "有效",
+    "description": "登录提交按钮",
+    "created_at": "2026-07-20 10:00"
+  },
+  {
+    "id": "4",
+    "name": "搜索框",
+    "locator_type": "css",
+    "locator_value": "input.search-input",
+    "page": "用例管理页面",
+    "project_id": "1",
+    "status": "有效",
+    "description": "用例列表搜索框",
+    "created_at": "2026-07-20 10:30"
+  },
+  {
+    "id": "58521002-e9ea-4f98-bcd3-3f15842491a9",
+    "name": "TestElement001",
+    "locator_type": "xpath",
+    "locator_value": "//input[@name='username']",
+    "page": "首页",
+    "project_id": "5",
+    "status": "有效",
+    "description": "",
+    "created_at": "2026-07-29 14:42",
+    "updated_at": "2026-07-29 15:17"
+  }
+]

@@ -1,0 +1,19 @@
+[
+  {
+    "id": "1",
+    "name": "登录模块回归测试",
+    "project_id": "1",
+    "description": "对登录模块进行完整回归测试",
+    "case_ids": [
+      "1"
+    ],
+    "browser": "chrome",
+    "headless": true,
+    "status": "pending",
+    "schedule": null,
+    "created_at": "2026-07-20 10:00",
+    "updated_at": "2026-07-20 10:00",
+    "last_run": null,
+    "last_result": null
+  }
+]

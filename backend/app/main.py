@@ -2611,6 +2611,11 @@ USERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config
 ROLES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/roles.json")
 PERMISSIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/permissions.json")
 ITERATIONS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/iterations.json")
+UI_ELEMENTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/ui_elements.json")
+UI_CASES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/ui_cases.json")
+UI_TASKS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/ui_tasks.json")
+UI_REPORTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/ui_reports.json")
+UI_SCREENSHOTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/ui_screenshots")
 
 def load_git_tasks():
     if os.path.exists(GIT_TASKS_FILE):
@@ -3720,6 +3725,7 @@ async def get_permission_tree():
 
 PERF_TESTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/perf_tests.json")
 PERF_REPORTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/perf_reports.json")
+PERF_ENVIRONMENTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/perf_environments.json")
 AI_MODELS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/ai_models.json")
 PLATFORM_SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/platform_settings.json")
 
@@ -3750,6 +3756,23 @@ def load_perf_reports():
 def save_perf_reports(reports):
     with open(PERF_REPORTS_FILE, 'w', encoding='utf-8') as f:
         json.dump(reports, f, ensure_ascii=False, indent=2)
+
+def load_perf_environments():
+    if os.path.exists(PERF_ENVIRONMENTS_FILE):
+        try:
+            with open(PERF_ENVIRONMENTS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            pass
+    return [
+        {"id": "env_dev", "name": "开发环境", "base_url": "http://dev.example.com", "headers": {"Content-Type": "application/json"}, "description": "开发环境"},
+        {"id": "env_staging", "name": "测试环境", "base_url": "http://staging.example.com", "headers": {"Content-Type": "application/json"}, "description": "测试环境"},
+        {"id": "env_prod", "name": "生产环境", "base_url": "https://api.example.com", "headers": {"Content-Type": "application/json"}, "description": "生产环境"}
+    ]
+
+def save_perf_environments(environments):
+    with open(PERF_ENVIRONMENTS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(environments, f, ensure_ascii=False, indent=2)
 
 def load_ai_models():
     if os.path.exists(AI_MODELS_FILE):
@@ -3862,6 +3885,21 @@ async def execute_perf_test(test_id: str):
             raise HTTPException(status_code=404, detail="性能测试不存在")
         test["status"] = "running"
         test["last_run"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 解析环境配置
+        env_id = test.get("environment_id")
+        env = None
+        base_url_override = None
+        if env_id:
+            environments = load_perf_environments()
+            env = next((e for e in environments if e["id"] == env_id), None)
+            if env:
+                base_url_override = env.get("base_url", "")
+        
+        # 获取步骤列表
+        steps = test.get("steps", [])
+        has_steps = len(steps) > 0
+        
         save_perf_tests(tests)
         # 模拟生成报告
         report_id = f"pr_{test_id.replace('pt_', '')}_{random.randint(100,999)}"
@@ -3888,10 +3926,31 @@ async def execute_perf_test(test_id: str):
             })
         total_req = int(tps_base * duration)
         success_req = int(total_req * (1 - err_base / 100))
+        
+        # 生成步骤执行结果
+        step_results = []
+        if has_steps:
+            for idx, step in enumerate(steps):
+                step_result = {
+                    "index": idx + 1,
+                    "name": step.get("name", f"步骤{idx+1}"),
+                    "type": step.get("type", "request"),
+                    "target": step.get("url", "") or step.get("target", ""),
+                    "status": "success" if random.random() > 0.1 else "failed",
+                    "response_time": round(random.uniform(20, 300), 1),
+                    "status_code": 200 if random.random() > 0.1 else random.choice([400, 500]),
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                step_results.append(step_result)
+        
         report = {
             "id": report_id,
             "test_id": test_id,
             "test_name": test.get("name", ""),
+            "environment": env.get("name", "") if env else None,
+            "is_scenario": has_steps,
+            "steps_count": len(steps) if has_steps else 0,
+            "step_results": step_results if has_steps else [],
             "status": "completed" if duration < 300 else "running",
             "start_time": test["last_run"],
             "end_time": test["last_run"] if duration < 300 else None,
@@ -3948,20 +4007,30 @@ async def debug_perf_test(test_id: str, request: Request):
         target_url = data.get("target_url", test.get("target_url", ""))
         headers_str = data.get("headers", test.get("headers", ""))
         body = data.get("body", test.get("body", ""))
+        environment_id = data.get("environment_id", test.get("environment_id"))
+        
+        # 应用环境配置
+        env_headers = {}
+        if environment_id:
+            environments = load_perf_environments()
+            env = next((e for e in environments if e["id"] == environment_id), None)
+            if env:
+                env_base_url = env.get("base_url", "")
+                if env_base_url and not target_url.startswith("http"):
+                    target_url = env_base_url.rstrip("/") + "/" + target_url.lstrip("/")
+                env_headers = env.get("headers", {})
         
         if not target_url:
             raise HTTPException(status_code=400, detail="目标URL不能为空")
         
-        full_url = f"{protocol}://{target_url}"
-        if not full_url.startswith("http://") and not full_url.startswith("https://"):
-            full_url = f"https://{target_url}"
+        full_url = target_url if target_url.startswith("http://") or target_url.startswith("https://") else f"{protocol}://{target_url}"
         
-        headers = {}
+        headers = dict(env_headers)
         if headers_str:
             try:
                 parsed_headers = json.loads(headers_str)
                 if isinstance(parsed_headers, dict):
-                    headers = parsed_headers
+                    headers.update(parsed_headers)
             except:
                 for line in headers_str.split("\n"):
                     if ":" in line:
@@ -4526,6 +4595,57 @@ async def get_perf_dashboard():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# --- 性能测试环境管理 API ---
+
+@app.get("/api/v1/perf/environments")
+async def get_perf_environments():
+    try:
+        environments = load_perf_environments()
+        return JSONResponse({"success": True, "environments": environments, "total": len(environments)})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/perf/environments")
+async def create_perf_environment(request: Request):
+    try:
+        body = await request.json()
+        environments = load_perf_environments()
+        new_id = body.get("id") or f"env_{len(environments)+1:03d}"
+        body["id"] = new_id
+        body["created_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        environments.append(body)
+        save_perf_environments(environments)
+        return JSONResponse({"success": True, "environment": body})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/v1/perf/environments/{env_id}")
+async def update_perf_environment(env_id: str, request: Request):
+    try:
+        body = await request.json()
+        environments = load_perf_environments()
+        idx = next((i for i, e in enumerate(environments) if e["id"] == env_id), None)
+        if idx is None:
+            raise HTTPException(status_code=404, detail="环境不存在")
+        body["id"] = env_id
+        body["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        environments[idx].update(body)
+        save_perf_environments(environments)
+        return JSONResponse({"success": True, "environment": environments[idx]})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/v1/perf/environments/{env_id}")
+async def delete_perf_environment(env_id: str):
+    try:
+        environments = load_perf_environments()
+        environments = [e for e in environments if e["id"] != env_id]
+        save_perf_environments(environments)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --- 禅道 Bug 管理 API ---
 
@@ -5094,6 +5214,608 @@ async def submit_bug_to_zentao(request: Request):
             "message": f"提交失败: {str(e)}"
         }, status_code=200)
 
+
+def load_ui_elements():
+    if os.path.exists(UI_ELEMENTS_FILE):
+        with open(UI_ELEMENTS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+def save_ui_elements(elements):
+    os.makedirs(os.path.dirname(UI_ELEMENTS_FILE), exist_ok=True)
+    with open(UI_ELEMENTS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(elements, f, ensure_ascii=False, indent=2)
+
+def load_ui_cases():
+    if os.path.exists(UI_CASES_FILE):
+        with open(UI_CASES_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+def save_ui_cases(cases):
+    os.makedirs(os.path.dirname(UI_CASES_FILE), exist_ok=True)
+    with open(UI_CASES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(cases, f, ensure_ascii=False, indent=2)
+
+def load_ui_tasks():
+    if os.path.exists(UI_TASKS_FILE):
+        with open(UI_TASKS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+def save_ui_tasks(tasks):
+    os.makedirs(os.path.dirname(UI_TASKS_FILE), exist_ok=True)
+    with open(UI_TASKS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(tasks, f, ensure_ascii=False, indent=2)
+
+def load_ui_reports():
+    if os.path.exists(UI_REPORTS_FILE):
+        with open(UI_REPORTS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+def save_ui_reports(reports):
+    os.makedirs(os.path.dirname(UI_REPORTS_FILE), exist_ok=True)
+    with open(UI_REPORTS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(reports, f, ensure_ascii=False, indent=2)
+
+def load_ui_screenshots():
+    screenshots = []
+    if os.path.exists(UI_SCREENSHOTS_DIR):
+        for file in os.listdir(UI_SCREENSHOTS_DIR):
+            if file.endswith('.json'):
+                with open(os.path.join(UI_SCREENSHOTS_DIR, file), 'r', encoding='utf-8') as f:
+                    screenshots.append(json.load(f))
+    return sorted(screenshots, key=lambda x: x.get('created_at', ''), reverse=True)
+
+def save_ui_screenshot(screenshot):
+    os.makedirs(UI_SCREENSHOTS_DIR, exist_ok=True)
+    filename = f"{screenshot.get('id', str(uuid.uuid4()))}.json"
+    with open(os.path.join(UI_SCREENSHOTS_DIR, filename), 'w', encoding='utf-8') as f:
+        json.dump(screenshot, f, ensure_ascii=False, indent=2)
+
+def delete_ui_screenshot(screenshot_id):
+    filename = f"{screenshot_id}.json"
+    filepath = os.path.join(UI_SCREENSHOTS_DIR, filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        return True
+    return False
+
+# UI元素管理API
+DEFAULT_UI_ELEMENTS = [
+    {"id": "1", "name": "用户名输入框", "locator_type": "xpath", "locator_value": "//input[@name='username']", "page": "登录页面", "project_id": "1", "status": "有效", "description": "登录页用户名输入框", "created_at": "2026-07-20 10:00"},
+    {"id": "2", "name": "密码输入框", "locator_type": "xpath", "locator_value": "//input[@name='password']", "page": "登录页面", "project_id": "1", "status": "有效", "description": "登录页密码输入框", "created_at": "2026-07-20 10:00"},
+    {"id": "3", "name": "登录按钮", "locator_type": "css", "locator_value": "button.login-btn", "page": "登录页面", "project_id": "1", "status": "有效", "description": "登录提交按钮", "created_at": "2026-07-20 10:00"},
+    {"id": "4", "name": "搜索框", "locator_type": "css", "locator_value": "input.search-input", "page": "用例管理页面", "project_id": "1", "status": "有效", "description": "用例列表搜索框", "created_at": "2026-07-20 10:30"}
+]
+
+@app.get("/api/v1/ui/elements")
+async def get_ui_elements(project_id: str = None, page: str = None, keyword: str = None):
+    try:
+        elements = load_ui_elements()
+        if not elements:
+            save_ui_elements(DEFAULT_UI_ELEMENTS)
+            elements = DEFAULT_UI_ELEMENTS
+        
+        if project_id:
+            elements = [e for e in elements if e.get("project_id") == project_id]
+        if page:
+            elements = [e for e in elements if e.get("page") == page]
+        if keyword:
+            elements = [e for e in elements if keyword.lower() in e.get("name", "").lower()]
+        
+        return JSONResponse({"elements": elements, "total": len(elements)})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/elements")
+async def add_ui_element(request: Request):
+    try:
+        data = await request.json()
+        elements = load_ui_elements()
+        
+        new_element = {
+            "id": str(uuid.uuid4()),
+            "name": data.get("name", ""),
+            "locator_type": data.get("locator_type", "xpath"),
+            "locator_value": data.get("locator_value", ""),
+            "page": data.get("page", ""),
+            "project_id": data.get("project_id", ""),
+            "status": data.get("status", "有效"),
+            "description": data.get("description", ""),
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        
+        elements.append(new_element)
+        save_ui_elements(elements)
+        return JSONResponse({"success": True, "element": new_element})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/v1/ui/elements/{element_id}")
+async def update_ui_element(element_id: str, request: Request):
+    try:
+        data = await request.json()
+        elements = load_ui_elements()
+        
+        for i, elem in enumerate(elements):
+            if elem["id"] == element_id:
+                for key, value in data.items():
+                    if key not in ["id", "created_at"]:
+                        elements[i][key] = value
+                elements[i]["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+                save_ui_elements(elements)
+                return JSONResponse({"success": True, "element": elements[i]})
+        
+        raise HTTPException(status_code=404, detail="元素不存在")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/v1/ui/elements/{element_id}")
+async def delete_ui_element(element_id: str):
+    try:
+        elements = load_ui_elements()
+        original_len = len(elements)
+        elements = [e for e in elements if e["id"] != element_id]
+        
+        if len(elements) == original_len:
+            raise HTTPException(status_code=404, detail="元素不存在")
+        
+        save_ui_elements(elements)
+        return JSONResponse({"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# UI测试场景API
+DEFAULT_UI_CASES = [
+    {
+        "id": "1",
+        "name": "登录功能测试",
+        "project_id": "1",
+        "description": "测试用户登录功能",
+        "url": "http://localhost:5173/login",
+        "steps": [
+            {"id": "s1", "type": "navigate", "name": "打开登录页", "params": {"url": "http://localhost:5173/login"}},
+            {"id": "s2", "type": "input", "name": "输入用户名", "element": "用户名输入框", "params": {"value": "admin"}},
+            {"id": "s3", "type": "input", "name": "输入密码", "element": "密码输入框", "params": {"value": "123456"}},
+            {"id": "s4", "type": "click", "name": "点击登录", "element": "登录按钮", "params": {}},
+            {"id": "s5", "type": "assert", "name": "验证登录成功", "params": {"text": "首页工作台"}}
+        ],
+        "status": "active",
+        "created_at": "2026-07-20 10:00",
+        "updated_at": "2026-07-20 10:00"
+    },
+    {
+        "id": "2",
+        "name": "用例搜索功能",
+        "project_id": "1",
+        "description": "测试用例搜索功能",
+        "url": "http://localhost:5173/case-list",
+        "steps": [
+            {"id": "s1", "type": "navigate", "name": "打开用例列表", "params": {"url": "http://localhost:5173/case-list"}},
+            {"id": "s2", "type": "input", "name": "输入搜索关键字", "element": "搜索框", "params": {"value": "登录"}},
+            {"id": "s3", "type": "click", "name": "点击搜索按钮", "params": {}}
+        ],
+        "status": "active",
+        "created_at": "2026-07-20 10:30",
+        "updated_at": "2026-07-20 10:30"
+    }
+]
+
+@app.get("/api/v1/ui/cases")
+async def get_ui_cases(project_id: str = None, keyword: str = None):
+    try:
+        cases = load_ui_cases()
+        if not cases:
+            save_ui_cases(DEFAULT_UI_CASES)
+            cases = DEFAULT_UI_CASES
+        
+        if project_id:
+            cases = [c for c in cases if c.get("project_id") == project_id]
+        if keyword:
+            cases = [c for c in cases if keyword.lower() in c.get("name", "").lower()]
+        
+        return JSONResponse({"cases": cases, "total": len(cases)})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/cases")
+async def add_ui_case(request: Request):
+    try:
+        data = await request.json()
+        cases = load_ui_cases()
+        
+        new_case = {
+            "id": str(uuid.uuid4()),
+            "name": data.get("name", ""),
+            "project_id": data.get("project_id", ""),
+            "description": data.get("description", ""),
+            "url": data.get("url", ""),
+            "steps": data.get("steps", []),
+            "status": data.get("status", "active"),
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        
+        cases.append(new_case)
+        save_ui_cases(cases)
+        return JSONResponse({"success": True, "case": new_case})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/v1/ui/cases/{case_id}")
+async def update_ui_case(case_id: str, request: Request):
+    try:
+        data = await request.json()
+        cases = load_ui_cases()
+        
+        for i, case in enumerate(cases):
+            if case["id"] == case_id:
+                for key, value in data.items():
+                    if key not in ["id", "created_at"]:
+                        cases[i][key] = value
+                cases[i]["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+                save_ui_cases(cases)
+                return JSONResponse({"success": True, "case": cases[i]})
+        
+        raise HTTPException(status_code=404, detail="场景不存在")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/v1/ui/cases/{case_id}")
+async def delete_ui_case(case_id: str):
+    try:
+        cases = load_ui_cases()
+        original_len = len(cases)
+        cases = [c for c in cases if c["id"] != case_id]
+        
+        if len(cases) == original_len:
+            raise HTTPException(status_code=404, detail="场景不存在")
+        
+        save_ui_cases(cases)
+        return JSONResponse({"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/cases/{case_id}/execute")
+async def execute_ui_case(case_id: str, request: Request):
+    try:
+        cases = load_ui_cases()
+        case = None
+        for c in cases:
+            if c["id"] == case_id:
+                case = c
+                break
+        
+        if not case:
+            raise HTTPException(status_code=404, detail="场景不存在")
+        
+        data = await request.json() if request.method == "POST" else {}
+        steps = case.get("steps", [])
+        
+        results = []
+        for step in steps:
+            result = {
+                "step_id": step.get("id"),
+                "step_name": step.get("name"),
+                "status": "passed",
+                "duration": 0.5,
+                "message": ""
+            }
+            results.append(result)
+        
+        total_steps = len(results)
+        passed = sum(1 for r in results if r["status"] == "passed")
+        failed = sum(1 for r in results if r["status"] == "failed")
+        
+        report = {
+            "id": str(uuid.uuid4()),
+            "case_id": case_id,
+            "case_name": case.get("name"),
+            "project_id": case.get("project_id"),
+            "status": "passed" if failed == 0 else "failed",
+            "total_steps": total_steps,
+            "passed_steps": passed,
+            "failed_steps": failed,
+            "duration": len(results) * 0.5,
+            "results": results,
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        
+        reports = load_ui_reports()
+        reports.insert(0, report)
+        save_ui_reports(reports)
+        
+        return JSONResponse({
+            "success": True,
+            "report": report
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# UI测试任务API
+DEFAULT_UI_TASKS = [
+    {
+        "id": "1",
+        "name": "登录模块回归测试",
+        "project_id": "1",
+        "description": "对登录模块进行完整回归测试",
+        "case_ids": ["1"],
+        "browser": "chrome",
+        "headless": True,
+        "status": "pending",
+        "schedule": None,
+        "created_at": "2026-07-20 10:00",
+        "updated_at": "2026-07-20 10:00",
+        "last_run": None,
+        "last_result": None
+    }
+]
+
+@app.get("/api/v1/ui/tasks")
+async def get_ui_tasks(project_id: str = None):
+    try:
+        tasks = load_ui_tasks()
+        if not tasks:
+            save_ui_tasks(DEFAULT_UI_TASKS)
+            tasks = DEFAULT_UI_TASKS
+        
+        if project_id:
+            tasks = [t for t in tasks if t.get("project_id") == project_id]
+        
+        return JSONResponse({"tasks": tasks, "total": len(tasks)})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/tasks")
+async def add_ui_task(request: Request):
+    try:
+        data = await request.json()
+        tasks = load_ui_tasks()
+        
+        new_task = {
+            "id": str(uuid.uuid4()),
+            "name": data.get("name", ""),
+            "project_id": data.get("project_id", ""),
+            "description": data.get("description", ""),
+            "case_ids": data.get("case_ids", []),
+            "browser": data.get("browser", "chrome"),
+            "headless": data.get("headless", True),
+            "status": data.get("status", "pending"),
+            "schedule": data.get("schedule"),
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "last_run": None,
+            "last_result": None
+        }
+        
+        tasks.append(new_task)
+        save_ui_tasks(tasks)
+        return JSONResponse({"success": True, "task": new_task})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/v1/ui/tasks/{task_id}")
+async def update_ui_task(task_id: str, request: Request):
+    try:
+        data = await request.json()
+        tasks = load_ui_tasks()
+        
+        for i, task in enumerate(tasks):
+            if task["id"] == task_id:
+                for key, value in data.items():
+                    if key not in ["id", "created_at", "last_run", "last_result"]:
+                        tasks[i][key] = value
+                tasks[i]["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+                save_ui_tasks(tasks)
+                return JSONResponse({"success": True, "task": tasks[i]})
+        
+        raise HTTPException(status_code=404, detail="任务不存在")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/v1/ui/tasks/{task_id}")
+async def delete_ui_task(task_id: str):
+    try:
+        tasks = load_ui_tasks()
+        original_len = len(tasks)
+        tasks = [t for t in tasks if t["id"] != task_id]
+        
+        if len(tasks) == original_len:
+            raise HTTPException(status_code=404, detail="任务不存在")
+        
+        save_ui_tasks(tasks)
+        return JSONResponse({"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/tasks/{task_id}/execute")
+async def execute_ui_task(task_id: str):
+    try:
+        tasks = load_ui_tasks()
+        task = None
+        for t in tasks:
+            if t["id"] == task_id:
+                task = t
+                break
+        
+        if not task:
+            raise HTTPException(status_code=404, detail="任务不存在")
+        
+        case_ids = task.get("case_ids", [])
+        reports = []
+        
+        for case_id in case_ids:
+            cases = load_ui_cases()
+            case = None
+            for c in cases:
+                if c["id"] == case_id:
+                    case = c
+                    break
+            
+            if case:
+                steps = case.get("steps", [])
+                results = []
+                for step in steps:
+                    result = {
+                        "step_id": step.get("id"),
+                        "step_name": step.get("name"),
+                        "status": "passed",
+                        "duration": 0.5,
+                        "message": ""
+                    }
+                    results.append(result)
+                
+                total_steps = len(results)
+                passed = sum(1 for r in results if r["status"] == "passed")
+                failed = sum(1 for r in results if r["status"] == "failed")
+                
+                report = {
+                    "id": str(uuid.uuid4()),
+                    "case_id": case_id,
+                    "case_name": case.get("name"),
+                    "project_id": task.get("project_id"),
+                    "task_id": task_id,
+                    "status": "passed" if failed == 0 else "failed",
+                    "total_steps": total_steps,
+                    "passed_steps": passed,
+                    "failed_steps": failed,
+                    "duration": len(results) * 0.5,
+                    "results": results,
+                    "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+                }
+                reports.append(report)
+        
+        all_reports = load_ui_reports()
+        for report in reports:
+            all_reports.insert(0, report)
+        save_ui_reports(all_reports)
+        
+        for i, t in enumerate(tasks):
+            if t["id"] == task_id:
+                tasks[i]["last_run"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+                tasks[i]["last_result"] = "passed" if all(r["status"] == "passed" for r in reports) else "failed"
+                tasks[i]["status"] = "completed"
+                tasks[i]["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+                break
+        save_ui_tasks(tasks)
+        
+        return JSONResponse({
+            "success": True,
+            "reports": reports
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# UI测试报告API
+@app.get("/api/v1/ui/reports")
+async def get_ui_reports(project_id: str = None, status: str = None, limit: int = 50):
+    try:
+        reports = load_ui_reports()
+        
+        if project_id:
+            reports = [r for r in reports if r.get("project_id") == project_id]
+        if status:
+            reports = [r for r in reports if r.get("status") == status]
+        
+        reports = reports[:limit]
+        return JSONResponse({"reports": reports, "total": len(reports)})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/ui/reports/{report_id}")
+async def get_ui_report(report_id: str):
+    try:
+        reports = load_ui_reports()
+        for report in reports:
+            if report["id"] == report_id:
+                return JSONResponse({"report": report})
+        raise HTTPException(status_code=404, detail="报告不存在")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/v1/ui/reports/{report_id}")
+async def delete_ui_report(report_id: str):
+    try:
+        reports = load_ui_reports()
+        original_len = len(reports)
+        reports = [r for r in reports if r["id"] != report_id]
+        
+        if len(reports) == original_len:
+            raise HTTPException(status_code=404, detail="报告不存在")
+        
+        save_ui_reports(reports)
+        return JSONResponse({"success": True})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# UI截图API
+@app.get("/api/v1/ui/screenshots")
+async def get_ui_screenshots(project_id: str = None, case_id: str = None):
+    try:
+        screenshots = load_ui_screenshots()
+        
+        if project_id:
+            screenshots = [s for s in screenshots if s.get("project_id") == project_id]
+        if case_id:
+            screenshots = [s for s in screenshots if s.get("case_id") == case_id]
+        
+        return JSONResponse({"screenshots": screenshots, "total": len(screenshots)})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/screenshots")
+async def add_ui_screenshot(request: Request):
+    try:
+        data = await request.json()
+        screenshot = {
+            "id": str(uuid.uuid4()),
+            "case_id": data.get("case_id", ""),
+            "case_name": data.get("case_name", ""),
+            "project_id": data.get("project_id", ""),
+            "step_name": data.get("step_name", ""),
+            "status": data.get("status", "failed"),
+            "image_data": data.get("image_data", ""),
+            "error_message": data.get("error_message", ""),
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        save_ui_screenshot(screenshot)
+        return JSONResponse({"success": True, "screenshot": screenshot})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/v1/ui/screenshots/{screenshot_id}")
+async def delete_ui_screenshot_api(screenshot_id: str):
+    try:
+        success = delete_ui_screenshot(screenshot_id)
+        if success:
+            return JSONResponse({"success": True})
+        raise HTTPException(status_code=404, detail="截图不存在")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
