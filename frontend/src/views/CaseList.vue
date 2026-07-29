@@ -449,11 +449,42 @@
         </el-form-item>
         
         <el-form-item label="所属项目" required>
-          <el-input v-model="bugForm.project" placeholder="禅道项目ID" :disabled="zentaoConfigured" />
+          <el-select 
+            v-model="bugForm.project" 
+            placeholder="请选择项目" 
+            filterable
+            style="width: 100%"
+            :loading="zentaoProjectsLoading"
+            @change="handleZentaoProjectChange"
+          >
+            <el-option 
+              v-for="p in zentaoProjects" 
+              :key="p.id" 
+              :label="`${p.name} (ID: ${p.id})`" 
+              :value="p.id" 
+            />
+            <el-option v-if="!zentaoProjectsLoading && zentaoProjects.length === 0" label="暂无项目" disabled />
+          </el-select>
         </el-form-item>
         
         <el-form-item label="关联模块">
-          <el-input v-model="bugForm.module" placeholder="模块ID（可选）" />
+          <el-select 
+            v-model="bugForm.module" 
+            placeholder="请选择模块（可选）" 
+            filterable
+            clearable
+            style="width: 100%"
+            :loading="zentaoModulesLoading"
+            :disabled="!bugForm.project"
+          >
+            <el-option 
+              v-for="m in zentaoModules" 
+              :key="m.id" 
+              :label="`${m.name} (ID: ${m.id})`" 
+              :value="m.id" 
+            />
+            <el-option v-if="!zentaoModulesLoading && zentaoModules.length === 0 && bugForm.project" label="暂无模块" disabled />
+          </el-select>
         </el-form-item>
         
         <div class="form-row-inline">
@@ -578,6 +609,10 @@ const bugResultDialogVisible = ref(false)
 const bugSubmitting = ref(false)
 const bugResult = ref(null)
 const zentaoConfig = ref(null)
+const zentaoProjects = ref([])
+const zentaoModules = ref([])
+const zentaoProjectsLoading = ref(false)
+const zentaoModulesLoading = ref(false)
 
 const archiveForm = reactive({
   reason: ''
@@ -585,8 +620,8 @@ const archiveForm = reactive({
 
 const bugForm = reactive({
   title: '',
-  project: '',
-  module: '',
+  project: null,
+  module: null,
   severity: 3,
   priority: 3,
   type: 'codeError',
@@ -1236,15 +1271,72 @@ const loadZentaoConfig = async () => {
   }
 }
 
-const handleSubmitBug = (row) => {
+const loadZentaoProjects = async () => {
+  if (!zentaoConfigured.value) return
+  
+  zentaoProjectsLoading.value = true
+  try {
+    const res = await fetch('/api/v1/bugs/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    const json = await res.json()
+    if (json.success) {
+      zentaoProjects.value = json.projects || []
+    } else {
+      ElMessage.warning(json.message || '获取项目列表失败')
+      zentaoProjects.value = []
+    }
+  } catch (e) {
+    console.error('获取禅道项目列表失败:', e)
+    zentaoProjects.value = []
+  } finally {
+    zentaoProjectsLoading.value = false
+  }
+}
+
+const loadZentaoModules = async (projectId) => {
+  if (!projectId) {
+    zentaoModules.value = []
+    return
+  }
+  
+  zentaoModulesLoading.value = true
+  try {
+    const res = await fetch('/api/v1/bugs/modules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId })
+    })
+    const json = await res.json()
+    if (json.success) {
+      zentaoModules.value = json.modules || []
+    } else {
+      zentaoModules.value = []
+    }
+  } catch (e) {
+    console.error('获取禅道模块列表失败:', e)
+    zentaoModules.value = []
+  } finally {
+    zentaoModulesLoading.value = false
+  }
+}
+
+const handleZentaoProjectChange = async (projectId) => {
+  bugForm.module = null
+  await loadZentaoModules(projectId)
+}
+
+const handleSubmitBug = async (row) => {
   if (row.status !== '失败') {
     ElMessage.warning('只有状态为"失败"的用例才能提交Bug')
     return
   }
   
   bugForm.title = `[${row.name}] 执行失败`
-  bugForm.project = zentaoConfig.value?.project || ''
-  bugForm.module = row.module_id || ''
+  bugForm.project = zentaoConfig.value?.project ? Number(zentaoConfig.value.project) : null
+  bugForm.module = null
   bugForm.severity = zentaoConfig.value?.default_severity || 3
   bugForm.priority = zentaoConfig.value?.default_priority || 3
   bugForm.type = 'codeError'
@@ -1253,6 +1345,13 @@ const handleSubmitBug = (row) => {
   bugForm.assigned_to = ''
   
   bugDialogVisible.value = true
+  
+  if (zentaoConfigured.value) {
+    await loadZentaoProjects()
+    if (bugForm.project) {
+      await loadZentaoModules(bugForm.project)
+    }
+  }
 }
 
 const buildBugSteps = (row) => {
@@ -1285,8 +1384,8 @@ const handleConfirmSubmitBug = async () => {
     ElMessage.warning('请输入Bug标题')
     return
   }
-  if (!bugForm.project.trim()) {
-    ElMessage.warning('请输入所属项目')
+  if (!bugForm.project) {
+    ElMessage.warning('请选择所属项目')
     return
   }
   if (!bugForm.steps.trim()) {
@@ -1302,7 +1401,7 @@ const handleConfirmSubmitBug = async () => {
       body: JSON.stringify({
         title: bugForm.title,
         project: bugForm.project,
-        module: bugForm.module,
+        module: bugForm.module || 0,
         severity: bugForm.severity,
         priority: bugForm.priority,
         type: bugForm.type,

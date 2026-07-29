@@ -15,6 +15,10 @@ import gzip
 import zlib
 from datetime import datetime
 from dotenv import load_dotenv
+import urllib3
+
+# 禁用SSL警告，用于支持自签名证书的禅道服务器
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 load_dotenv()
 
@@ -4531,33 +4535,356 @@ def get_zentao_config():
     zentao = integrations.get("zentao", {})
     return zentao
 
-def zentao_login(base_url, account, password):
+def zentao_login(base_url, account, password, app_code="", app_key=""):
+    """禅道登录，支持多种版本的认证方式
+    
+    Args:
+        base_url: 禅道服务器地址
+        account: 账号
+        password: 密码
+        app_code: 应用代号（可选，用于免密登录）
+        app_key: 应用密钥（可选，用于免密登录）
+    """
     import requests as req
-    login_url = f"{base_url.rstrip('/')}/api.php?m=user&f=apilogin"
-    params = {
-        "account": account,
-        "password": password
-    }
-    response = req.get(login_url, params=params, timeout=15)
-    data = response.json()
-    if data.get("status") == 1:
-        return data.get("data", "")
-    raise Exception(f"禅道登录失败: {data.get('reason', '未知错误')}")
+    import hashlib
+    import time as time_module
+    
+    errors = []
+    
+    # 如果配置了应用代号和密钥，优先使用免密登录方式
+    if app_code and app_key:
+        try:
+            timestamp = str(int(time_module.time()))
+            # 生成token: MD5(code + key + time)
+            token_str = f"{app_code}{app_key}{timestamp}"
+            token = hashlib.md5(token_str.encode()).hexdigest().upper()
+            
+            login_url = f"{base_url.rstrip('/')}/api.php?m=user&f=apilogin"
+            params = {
+                "account": account,
+                "code": app_code,
+                "time": timestamp,
+                "token": token
+            }
+            response = req.get(login_url, params=params, timeout=15, verify=False)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("status") == 1:
+                    session_id = data.get("data", "")
+                    if session_id:
+                        return {"type": "session", "value": session_id, "method": "免密登录"}
+                errors.append(f"免密登录失败: {data.get('reason', '未知错误')}")
+            else:
+                errors.append(f"免密登录失败: HTTP {response.status_code}")
+        except Exception as e:
+            errors.append(f"免密登录异常: {str(e)}")
+    
+    # 方式1: 新版禅道 (18+版本) - Token认证
+    try:
+        token_url = f"{base_url.rstrip('/')}/api.php/v1/tokens"
+        payload = {
+            "account": account,
+            "password": password
+        }
+        response = req.post(token_url, json=payload, timeout=15, verify=False)
+        if response.status_code == 200:
+            data = response.json()
+            token = data.get("token", "")
+            if token:
+                return {"type": "token", "value": token, "method": "新版Token认证"}
+            # 尝试从其他字段获取token
+            if isinstance(data, dict) and data.get("status") == 1:
+                token = data.get("data", "")
+                if token:
+                    return {"type": "token", "value": token, "method": "新版Token认证"}
+        errors.append(f"新版API登录失败: HTTP {response.status_code}, {response.text[:200]}")
+    except Exception as e:
+        errors.append(f"新版API异常: {str(e)}")
+    
+    # 方式2: 简化版API登录 (禅道11+版本)
+    try:
+        login_url = f"{base_url.rstrip('/')}/api.php?m=user&f=apilogin"
+        params = {
+            "account": account,
+            "password": password
+        }
+        response = req.get(login_url, params=params, timeout=15, verify=False)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == 1:
+                session_id = data.get("data", "")
+                if session_id:
+                    return {"type": "session", "value": session_id, "method": "简化API登录"}
+            errors.append(f"简化API登录失败: {data.get('reason', data.get('errmsg', '未知错误'))}")
+        else:
+            errors.append(f"简化API登录失败: HTTP {response.status_code}")
+    except Exception as e:
+        errors.append(f"简化API异常: {str(e)}")
+    
+    # 方式3: 旧版禅道两步登录
+    try:
+        # 第一步: 获取Session ID
+        session_url = f"{base_url.rstrip('/')}/index.php?m=api&f=getSessionID&t=json"
+        response = req.get(session_url, timeout=15, verify=False)
+        if response.status_code == 200:
+            try:
+                session_data = response.json()
+                if session_data.get("status") == "success":
+                    session_info = session_data.get("data", {})
+                    session_name = session_info.get("sessionName", "zentaosid")
+                    session_id = session_info.get("sessionID", "")
+                    
+                    # 第二步: 使用Session ID登录
+                    login_url = f"{base_url.rstrip('/')}/index.php?m=user&f=login&t=json&{session_name}={session_id}"
+                    login_data = {
+                        "account": account,
+                        "password": password
+                    }
+                    response = req.post(login_url, data=login_data, timeout=15, verify=False)
+                    if response.status_code == 200:
+                        login_result = response.json()
+                        if login_result.get("status") == "success":
+                            cookies = response.cookies
+                            return {"type": "cookies", "value": cookies, "method": "旧版两步登录"}
+                        errors.append(f"旧版登录失败: {login_result.get('reason', '未知错误')}")
+                    else:
+                        errors.append(f"旧版登录失败: HTTP {response.status_code}")
+                else:
+                    errors.append(f"获取Session失败: {session_data.get('reason', '未知错误')}")
+            except Exception:
+                # 如果获取Session接口返回非JSON格式，尝试使用表单登录
+                pass
+        else:
+            errors.append(f"获取Session失败: HTTP {response.status_code}")
+    except Exception as e:
+        errors.append(f"旧版登录异常: {str(e)}")
+    
+    # 方式4: 表单直接登录（模拟浏览器）
+    try:
+        login_url = f"{base_url.rstrip('/')}/index.php?m=user&f=login"
+        login_data = {
+            "account": account,
+            "password": password
+        }
+        # 先访问登录页获取cookie
+        session = req.Session()
+        session.get(f"{base_url.rstrip('/')}/index.php?m=user&f=login", timeout=15, verify=False)
+        # 提交登录表单
+        response = session.post(login_url, data=login_data, timeout=15, verify=False)
+        if response.status_code == 200:
+            # 检查是否登录成功（是否还在登录页面）
+            if "login" not in response.url.lower() or response.text.find("保持登录") == -1:
+                cookies = session.cookies
+                if cookies:
+                    return {"type": "cookies", "value": cookies, "method": "表单登录"}
+            errors.append("表单登录失败：账号密码错误或需要验证码")
+        else:
+            errors.append(f"表单登录失败: HTTP {response.status_code}")
+    except Exception as e:
+        errors.append(f"表单登录异常: {str(e)}")
+    
+    error_msg = " | ".join(errors[-3:]) if errors else "未知错误"
+    raise Exception(f"禅道连接失败: {error_msg}")
 
-def zentao_create_bug(base_url, session_id, bug_data):
+def zentao_create_bug(base_url, auth, bug_data):
+    """禅道创建Bug，支持多种认证方式"""
     import requests as req
-    create_url = f"{base_url.rstrip('/')}/api.php?m=bug&f=apiCreate"
-    params = {
-        "data": json.dumps(bug_data, ensure_ascii=False)
-    }
-    headers = {
-        "Cookie": f"zentao-sid={session_id}"
-    }
-    response = req.get(create_url, params=params, headers=headers, timeout=30)
-    data = response.json()
-    if data.get("status") == 1:
-        return data.get("data", {})
-    raise Exception(f"创建Bug失败: {data.get('reason', '未知错误')}")
+    
+    auth_type = auth.get("type", "")
+    auth_value = auth.get("value", "")
+    
+    # 方式1: 使用Token认证创建Bug (新版禅道)
+    if auth_type == "token":
+        try:
+            create_url = f"{base_url.rstrip('/')}/api.php/v1/bugs"
+            headers = {
+                "Token": auth_value,
+                "Content-Type": "application/json"
+            }
+            response = req.post(create_url, json=bug_data, headers=headers, timeout=30, verify=False)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("status") == 1:
+                    return data.get("data", {})
+                # 兼容其他返回格式
+                if isinstance(data, dict) and "id" in data:
+                    return data
+                if isinstance(data, dict) and data.get("bug", {}).get("id"):
+                    return data.get("bug", {})
+            raise Exception(f"创建Bug失败: HTTP {response.status_code}, {response.text}")
+        except Exception as e:
+            raise Exception(f"创建Bug失败: {str(e)}")
+    
+    # 方式2: 使用Session认证创建Bug (旧版API)
+    elif auth_type == "session":
+        try:
+            create_url = f"{base_url.rstrip('/')}/api.php?m=bug&f=apiCreate"
+            params = {
+                "data": json.dumps(bug_data, ensure_ascii=False)
+            }
+            headers = {
+                "Cookie": f"zentao-sid={auth_value}"
+            }
+            response = req.get(create_url, params=params, headers=headers, timeout=30, verify=False)
+            data = response.json()
+            if data.get("status") == 1:
+                return data.get("data", {})
+            raise Exception(f"创建Bug失败: {data.get('reason', '未知错误')}")
+        except Exception as e:
+            raise Exception(f"创建Bug失败: {str(e)}")
+    
+    # 方式3: 使用Cookie认证创建Bug
+    elif auth_type == "cookies":
+        try:
+            create_url = f"{base_url.rstrip('/')}/index.php?m=bug&f=create&t=json"
+            response = req.post(create_url, data=bug_data, cookies=auth_value, timeout=30, verify=False)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("status") == "success":
+                    return {"id": data.get("id", "")}
+            raise Exception(f"创建Bug失败: HTTP {response.status_code}")
+        except Exception as e:
+            raise Exception(f"创建Bug失败: {str(e)}")
+    
+    else:
+        raise Exception("无效的认证类型")
+
+def zentao_get_projects(base_url, auth):
+    """获取禅道项目列表"""
+    import requests as req
+    
+    auth_type = auth.get("type", "")
+    auth_value = auth.get("value", "")
+    projects = []
+    
+    # 方式1: 使用Token认证
+    if auth_type == "token":
+        try:
+            url = f"{base_url.rstrip('/')}/api.php/v1/projects"
+            headers = {
+                "Token": auth_value,
+                "Content-Type": "application/json"
+            }
+            response = req.get(url, headers=headers, timeout=15, verify=False)
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    projects = [{"id": p.get("id"), "name": p.get("name", "")} for p in data]
+                elif isinstance(data, dict) and data.get("projects"):
+                    projects = [{"id": p.get("id"), "name": p.get("name", "")} for p in data["projects"]]
+        except Exception:
+            pass
+    
+    # 方式2: 使用Session认证
+    elif auth_type == "session":
+        try:
+            url = f"{base_url.rstrip('/')}/api.php?m=project&f=apilibs"
+            headers = {
+                "Cookie": f"zentao-sid={auth_value}"
+            }
+            response = req.get(url, headers=headers, timeout=15, verify=False)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("status") == 1:
+                    proj_data = data.get("data", {})
+                    if isinstance(proj_data, list):
+                        projects = [{"id": p.get("id"), "name": p.get("name", "")} for p in proj_data]
+                    elif isinstance(proj_data, dict):
+                        for key, value in proj_data.items():
+                            if isinstance(value, dict) and "name" in value:
+                                projects.append({"id": value.get("id", key), "name": value.get("name", "")})
+        except Exception:
+            pass
+    
+    # 方式3: 使用Cookie认证
+    elif auth_type == "cookies":
+        try:
+            url = f"{base_url.rstrip('/')}/index.php?m=project&f=manage&t=json"
+            response = req.get(url, cookies=auth_value, timeout=15, verify=False)
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    if data.get("status") == "success":
+                        proj_list = data.get("data", [])
+                        if isinstance(proj_list, list):
+                            for p in proj_list:
+                                if isinstance(p, dict):
+                                    projects.append({"id": p.get("id"), "name": p.get("name", "")})
+                except Exception:
+                    pass
+        except Exception:
+            pass
+    
+    return projects
+
+def zentao_get_modules(base_url, auth, project_id):
+    """获取禅道模块列表"""
+    import requests as req
+    
+    auth_type = auth.get("type", "")
+    auth_value = auth.get("value", "")
+    modules = []
+    
+    # 方式1: 使用Token认证
+    if auth_type == "token":
+        try:
+            url = f"{base_url.rstrip('/')}/api.php/v1/products/{project_id}/modules"
+            headers = {
+                "Token": auth_value,
+                "Content-Type": "application/json"
+            }
+            response = req.get(url, headers=headers, timeout=15, verify=False)
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    modules = [{"id": m.get("id"), "name": m.get("name", "")} for m in data]
+                elif isinstance(data, dict) and data.get("modules"):
+                    modules = [{"id": m.get("id"), "name": m.get("name", "")} for m in data["modules"]]
+        except Exception:
+            pass
+    
+    # 方式2: 使用Session认证
+    elif auth_type == "session":
+        try:
+            url = f"{base_url.rstrip('/')}/api.php?m=module&f=apilibs"
+            params = {"productID": project_id}
+            headers = {
+                "Cookie": f"zentao-sid={auth_value}"
+            }
+            response = req.get(url, params=params, headers=headers, timeout=15, verify=False)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("status") == 1:
+                    mod_data = data.get("data", {})
+                    if isinstance(mod_data, list):
+                        modules = [{"id": m.get("id"), "name": m.get("name", "")} for m in mod_data]
+                    elif isinstance(mod_data, dict):
+                        for key, value in mod_data.items():
+                            if isinstance(value, dict) and "name" in value:
+                                modules.append({"id": value.get("id", key), "name": value.get("name", "")})
+        except Exception:
+            pass
+    
+    # 方式3: 使用Cookie认证
+    elif auth_type == "cookies":
+        try:
+            url = f"{base_url.rstrip('/')}/index.php?m=module&f=manage&productID={project_id}&t=json"
+            response = req.get(url, cookies=auth_value, timeout=15, verify=False)
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    if data.get("status") == "success":
+                        mod_list = data.get("data", [])
+                        if isinstance(mod_list, list):
+                            for m in mod_list:
+                                if isinstance(m, dict):
+                                    modules.append({"id": m.get("id"), "name": m.get("name", "")})
+                except Exception:
+                    pass
+        except Exception:
+            pass
+    
+    return modules
 
 @app.post("/api/v1/bugs/test_connection")
 async def test_zentao_connection(request: Request):
@@ -4566,6 +4893,8 @@ async def test_zentao_connection(request: Request):
         base_url = body.get("base_url", "").strip().rstrip("/")
         account = body.get("account", "").strip()
         password = body.get("password", "").strip()
+        app_code = body.get("app_code", "").strip()
+        app_key = body.get("app_key", "").strip()
         
         if not base_url:
             raise HTTPException(status_code=400, detail="禅道服务器地址不能为空")
@@ -4574,11 +4903,14 @@ async def test_zentao_connection(request: Request):
         if not password:
             raise HTTPException(status_code=400, detail="密码不能为空")
         
-        session_id = zentao_login(base_url, account, password)
+        auth = zentao_login(base_url, account, password, app_code, app_key)
+        auth_type = auth.get("type", "unknown")
+        auth_method = auth.get("method", auth_type)
         return JSONResponse({
             "success": True,
-            "message": "禅道连接成功",
-            "session_id": session_id
+            "message": f"禅道连接成功（使用{auth_method}）",
+            "auth_type": auth_type,
+            "auth_method": auth_method
         })
     except HTTPException:
         raise
@@ -4586,6 +4918,114 @@ async def test_zentao_connection(request: Request):
         return JSONResponse({
             "success": False,
             "message": f"连接失败: {str(e)}"
+        }, status_code=200)
+
+@app.post("/api/v1/bugs/projects")
+async def get_zentao_projects(request: Request):
+    """获取禅道项目列表"""
+    try:
+        body = await request.json()
+        zentao_config = get_zentao_config()
+        
+        base_url = zentao_config.get("url", "").strip().rstrip("/")
+        account = zentao_config.get("account", "").strip()
+        password = zentao_config.get("password", "").strip()
+        app_code = zentao_config.get("app_code", "").strip()
+        app_key = zentao_config.get("app_key", "").strip()
+        
+        override_url = body.get("base_url", "").strip().rstrip("/")
+        if override_url:
+            base_url = override_url
+        override_account = body.get("account", "").strip()
+        if override_account:
+            account = override_account
+        override_password = body.get("password", "").strip()
+        if override_password:
+            password = override_password
+        override_app_code = body.get("app_code", "").strip()
+        if override_app_code:
+            app_code = override_app_code
+        override_app_key = body.get("app_key", "").strip()
+        if override_app_key:
+            app_key = override_app_key
+        
+        if not base_url:
+            raise HTTPException(status_code=400, detail="禅道服务器地址未配置")
+        if not account:
+            raise HTTPException(status_code=400, detail="禅道账号未配置")
+        if not password:
+            raise HTTPException(status_code=400, detail="禅道密码未配置")
+        
+        auth = zentao_login(base_url, account, password, app_code, app_key)
+        projects = zentao_get_projects(base_url, auth)
+        
+        return JSONResponse({
+            "success": True,
+            "projects": projects
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse({
+            "success": False,
+            "message": f"获取项目列表失败: {str(e)}",
+            "projects": []
+        }, status_code=200)
+
+@app.post("/api/v1/bugs/modules")
+async def get_zentao_modules(request: Request):
+    """获取禅道模块列表"""
+    try:
+        body = await request.json()
+        zentao_config = get_zentao_config()
+        
+        base_url = zentao_config.get("url", "").strip().rstrip("/")
+        account = zentao_config.get("account", "").strip()
+        password = zentao_config.get("password", "").strip()
+        app_code = zentao_config.get("app_code", "").strip()
+        app_key = zentao_config.get("app_key", "").strip()
+        
+        override_url = body.get("base_url", "").strip().rstrip("/")
+        if override_url:
+            base_url = override_url
+        override_account = body.get("account", "").strip()
+        if override_account:
+            account = override_account
+        override_password = body.get("password", "").strip()
+        if override_password:
+            password = override_password
+        override_app_code = body.get("app_code", "").strip()
+        if override_app_code:
+            app_code = override_app_code
+        override_app_key = body.get("app_key", "").strip()
+        if override_app_key:
+            app_key = override_app_key
+        
+        project_id = body.get("project_id", "").strip()
+        if not project_id:
+            raise HTTPException(status_code=400, detail="项目ID不能为空")
+        
+        if not base_url:
+            raise HTTPException(status_code=400, detail="禅道服务器地址未配置")
+        if not account:
+            raise HTTPException(status_code=400, detail="禅道账号未配置")
+        if not password:
+            raise HTTPException(status_code=400, detail="禅道密码未配置")
+        
+        auth = zentao_login(base_url, account, password, app_code, app_key)
+        modules = zentao_get_modules(base_url, auth, project_id)
+        
+        return JSONResponse({
+            "success": True,
+            "modules": modules
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse({
+            "success": False,
+            "message": f"获取模块列表失败: {str(e)}",
+            "modules": []
         }, status_code=200)
 
 @app.post("/api/v1/bugs/submit")
@@ -4598,6 +5038,8 @@ async def submit_bug_to_zentao(request: Request):
         account = zentao_config.get("account", "").strip()
         password = zentao_config.get("password", "").strip()
         default_project = zentao_config.get("project", "")
+        app_code = zentao_config.get("app_code", "").strip()
+        app_key = zentao_config.get("app_key", "").strip()
         
         override_url = body.get("base_url", "").strip().rstrip("/")
         if override_url:
@@ -4608,6 +5050,12 @@ async def submit_bug_to_zentao(request: Request):
         override_password = body.get("password", "").strip()
         if override_password:
             password = override_password
+        override_app_code = body.get("app_code", "").strip()
+        if override_app_code:
+            app_code = override_app_code
+        override_app_key = body.get("app_key", "").strip()
+        if override_app_key:
+            app_key = override_app_key
         
         if not base_url:
             raise HTTPException(status_code=400, detail="禅道服务器地址未配置，请先在平台设置中配置")
@@ -4629,8 +5077,8 @@ async def submit_bug_to_zentao(request: Request):
             "assignedTo": body.get("assigned_to", "")
         }
         
-        session_id = zentao_login(base_url, account, password)
-        result = zentao_create_bug(base_url, session_id, bug_data)
+        auth = zentao_login(base_url, account, password, app_code, app_key)
+        result = zentao_create_bug(base_url, auth, bug_data)
         
         return JSONResponse({
             "success": True,

@@ -3,7 +3,6 @@
     "platform_name": "智能自动化测试平台",
     "version": "3.0.0",
     "description": "企业级智能性能测试与自动化测试平台",
-    "logo_url": "",
     "language": "zh-CN",
     "timezone": "Asia/Shanghai"
   },
@@ -17,7 +16,7 @@
     "metrics_storage": "influxdb"
   },
   "ai": {
-    "enable_ai_analysis": true,
+    "enabled": false,
     "auto_bottleneck_detection": true,
     "auto_anomaly_detection": true,
     "auto_scenario_generation": false,
@@ -25,21 +24,47 @@
     "confidence_threshold": 0.85
   },
   "alerts": {
-    "enable_email_alert": true,
-    "enable_webhook_alert": true,
-    "alert_recipients": ["admin@test.com"],
+    "email_enabled": false,
+    "webhook_enabled": false,
+    "recipients": [],
     "webhook_url": "",
-    "alert_rules": [
-      {"metric": "error_rate", "threshold": 5, "operator": ">", "severity": "critical"},
-      {"metric": "response_time", "threshold": 2000, "operator": ">", "severity": "warning"},
-      {"metric": "cpu_usage", "threshold": 80, "operator": ">", "severity": "warning"}
+    "rules": [
+      {
+        "metric": "response_time",
+        "threshold": 2000,
+        "operator": ">",
+        "severity": "warning"
+      }
     ]
   },
   "integrations": {
-    "jira": {"enabled": false, "url": "", "token": ""},
-    "slack": {"enabled": false, "webhook": ""},
-    "grafana": {"enabled": true, "url": "http://localhost:3000", "dashboard": "perf-dashboard"},
-    "prometheus": {"enabled": true, "url": "http://localhost:9090"}
+    "jira": {
+      "enabled": false,
+      "url": "",
+      "token": ""
+    },
+    "slack": {
+      "enabled": false,
+      "webhook": ""
+    },
+    "grafana": {
+      "enabled": false,
+      "url": "http://localhost:3000",
+      "dashboard": "perf-dashboard"
+    },
+    "prometheus": {
+      "enabled": false,
+      "url": "http://localhost:9090"
+    },
+    "zentao": {
+      "enabled": true,
+      "url": "http://192.168.100.67:88/zentao/user-login-L3plbnRhby9teS5odG1s.html",
+      "account": "suzq",
+      "password": "hxkr2026",
+      "project": "",
+      "default_severity": 3,
+      "default_priority": 3
+    }
   },
   "security": {
     "session_timeout": 30,
@@ -54,10 +79,10 @@
     "ip_whitelist": [],
     "audit_log": true
   },
-  " scalability": {
+  "scalability": {
     "max_projects": 100,
     "max_users_per_project": 50,
     "max_test_cases": 10000,
-    "max_concurrent_users": 5000
+    "max_concurrent_users": 500
   }
 }

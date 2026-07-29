@@ -313,6 +313,22 @@
                 </el-form-item>
               </div>
               <div class="form-row">
+                <el-form-item label="应用代号" :required="false">
+                  <el-input v-model="settings.integrations.zentao.app_code" placeholder="可选，禅道应用免密登录代号" :disabled="!settings.integrations.zentao.enabled" />
+                </el-form-item>
+                <el-form-item label="应用密钥" :required="false">
+                  <el-input v-model="settings.integrations.zentao.app_key" type="password" show-password placeholder="可选，禅道应用免密登录密钥" :disabled="!settings.integrations.zentao.enabled" />
+                </el-form-item>
+              </div>
+              <div class="form-hint" v-if="settings.integrations.zentao.enabled">
+                <p>💡 <strong>应用代号和密钥说明：</strong></p>
+                <p>如果禅道版本较新（11.5+），API登录需要配置应用。在禅道后台：</p>
+                <p>1. 进入「二次开发 → 应用」，点击「添加应用」</p>
+                <p>2. 开启「免密登录」，获取应用代号和密钥</p>
+                <p>3. 将代号和密钥填入上方输入框</p>
+                <p>💡 如果不配置，系统会尝试使用账号密码直接登录</p>
+              </div>
+              <div class="form-row">
                 <el-form-item label="默认严重程度">
                   <el-select v-model="settings.integrations.zentao.default_severity" :disabled="!settings.integrations.zentao.enabled" style="width: 100%">
                     <el-option label="1-致命" :value="1" />
@@ -490,7 +506,7 @@ const defaultSettings = () => ({
     slack: { enabled: false, webhook: '' },
     grafana: { enabled: false, url: '', dashboard: '' },
     prometheus: { enabled: false, url: '' },
-    zentao: { enabled: false, url: '', account: '', password: '', project: '', default_severity: 3, default_priority: 3 }
+    zentao: { enabled: false, url: '', account: '', password: '', project: '', app_code: '', app_key: '', default_severity: 3, default_priority: 3 }
   },
   security: {
     session_timeout: 30,
@@ -534,7 +550,9 @@ const testZentaoConnection = async () => {
       body: JSON.stringify({
         base_url: zentao.url,
         account: zentao.account,
-        password: zentao.password
+        password: zentao.password,
+        app_code: zentao.app_code || '',
+        app_key: zentao.app_key || ''
       })
     })
     const json = await res.json()
@@ -738,6 +756,24 @@ onMounted(() => {
 
 .form-row .el-form-item {
   margin-bottom: 18px;
+}
+
+.form-hint {
+  background: #f4f4f5;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.6;
+}
+
+.form-hint p {
+  margin: 4px 0;
+}
+
+.form-hint strong {
+  color: #303133;
 }
 
 .rules-table {
