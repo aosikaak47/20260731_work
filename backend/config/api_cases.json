@@ -1166,11 +1166,11 @@
     "headers": [
       {
         "key": "Content-Type",
-        "value": "application/json;charset=UTF-8"
+        "value": "application/json"
       },
       {
         "key": "Cookie",
-        "value": "JSESSIONID=01F2F680D41AA1085967D0F617D3D496; Hm_lvt_ae02bfc0d49b4dfa890f81d96472fe99=1784859666,1785130627,1785134818,1785204290"
+        "value": "JSESSIONID=D92A46481FBF4331D24CC274D2EA046C; Hm_lvt_ae02bfc0d49b4dfa890f81d96472fe99=1784859666,1785130627,1785134818,1785204290; congress=eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImluc3RpdHV0aW9uIjoiMSIsImtpZCI6Im14a19hdXRoX2p3ayIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTUyNy9zaWduIiwiZXhwIjoxNzg1Mzc5NDAxLCJsb2NhbGUiOiJkZSIsImlhdCI6MTc4NTM3MjIwMSwianRpIjoiMTI4MDEyNTYzNzg2ODEyNjIwOCJ9._fVNle5yeIfMP4teQ8Si1k6He4p0J2ioi6ubBCbBWS0n3lupDnXGpGS9tsn6yRTBhtyc2VOS84LE7pw1Zb6Aug"
       }
     ],
     "params": [],
@@ -1186,11 +1186,11 @@
         "type": "json_path",
         "operator": "contains",
         "expected": "AI智能体开发与训练平台",
-        "field": "data[*]"
+        "field": "data[0].appName"
       }
     ],
     "status": "已启用",
     "created_at": "2026-07-29 16:25",
-    "updated_at": "2026-07-29 17:09"
+    "updated_at": "2026-07-30 10:02"
   }
 ]

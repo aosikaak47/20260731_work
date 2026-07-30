@@ -306,240 +306,265 @@
       />
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑接口用例' : '新建接口用例'" width="700px">
-      <el-form :model="caseForm" label-width="100px">
-        <el-form-item label="接口名称" required>
-          <el-input v-model="caseForm.name" placeholder="请输入接口名称" />
-        </el-form-item>
-        <el-form-item label="请求方式">
-          <el-select v-model="caseForm.method">
-            <el-option label="GET" value="GET" />
-            <el-option label="POST" value="POST" />
-            <el-option label="PUT" value="PUT" />
-            <el-option label="DELETE" value="DELETE" />
-            <el-option label="PATCH" value="PATCH" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="请求地址" required>
-          <el-input v-model="caseForm.url" placeholder="请输入请求地址，如 /api/login" />
-        </el-form-item>
-        <el-form-item label="所属模块">
-          <el-input v-model="caseForm.module" placeholder="请输入所属模块" />
-        </el-form-item>
-        <el-form-item label="所属项目">
-          <el-select v-model="caseForm.project_id" placeholder="选择所属项目">
-            <el-option v-for="proj in projects" :key="proj.id" :label="proj.name" :value="proj.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="测试环境">
-          <el-select v-model="caseForm.environment_id" placeholder="选择测试环境">
-            <el-option v-for="env in environments" :key="env.id" :label="env.name" :value="env.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-radio-group v-model="caseForm.status">
-            <el-radio label="已启用" />
-            <el-radio label="已禁用" />
-          </el-radio-group>
-        </el-form-item>
-        
-        <el-form-item label="请求头">
-          <div class="headers-container">
-            <div v-for="(header, index) in caseForm.headers" :key="index" class="header-row">
-              <el-input v-model="header.key" placeholder="Header名" class="header-input" />
-              <el-input v-model="header.value" placeholder="Header值" class="header-input" />
-              <el-button type="danger" size="small" @click="removeHeader(index)">
-                <el-icon><component :is="icons.Delete" /></el-icon>
-              </el-button>
-            </div>
-            <el-button type="primary" size="small" @click="addHeader">
-              <el-icon><component :is="icons.Plus" /></el-icon>
-              添加请求头
-            </el-button>
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑接口用例' : '新建接口用例'" width="95%" top="2vh" :close-on-click-modal="false">
+      <div class="edit-debug-layout">
+        <!-- 左侧：编辑配置 -->
+        <div class="edit-panel">
+          <div class="panel-header">
+            <span class="panel-title">接口配置</span>
           </div>
-        </el-form-item>
-        
-        <el-form-item label="URL参数">
-          <div class="params-container">
-            <div v-for="(param, index) in caseForm.params" :key="index" class="param-row">
-              <el-input v-model="param.key" placeholder="参数名" class="param-input" />
-              <el-input v-model="param.value" placeholder="参数值" class="param-input" />
-              <el-button type="danger" size="small" @click="removeParam(index)">
-                <el-icon><component :is="icons.Delete" /></el-icon>
-              </el-button>
-            </div>
-            <el-button type="primary" size="small" @click="addParam">
-              <el-icon><component :is="icons.Plus" /></el-icon>
-              添加参数
-            </el-button>
-          </div>
-        </el-form-item>
-        
-        <el-form-item label="请求体类型">
-          <el-select v-model="caseForm.body_type">
-            <el-option label="无" value="none" />
-            <el-option label="JSON" value="json" />
-            <el-option label="Form Data" value="form" />
-            <el-option label="Text" value="text" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="请求体">
-          <el-input 
-            v-model="caseForm.body" 
-            type="textarea" 
-            :rows="4" 
-            placeholder="请输入请求体内容"
-            :disabled="caseForm.body_type === 'none'"
-          />
-        </el-form-item>
-        
-        <el-form-item label="断言设置">
-          <div class="assertions-container">
-            <div v-for="(assertion, index) in caseForm.assertions" :key="index" class="assertion-row">
-              <el-select v-model="assertion.type" class="assertion-select">
-                <el-option label="响应状态码" value="status_code" />
-                <el-option label="JSON路径" value="json_path" />
-                <el-option label="响应时间" value="response_time" />
-              </el-select>
-              <el-input v-model="assertion.field" placeholder="字段路径" class="assertion-input" v-if="assertion.type === 'json_path'" />
-              <el-select v-model="assertion.operator" class="assertion-select">
-                <el-option label="等于" value="==" />
-                <el-option label="不等于" value="!=" />
-                <el-option label="大于等于" value=">=" />
-                <el-option label="小于等于" value="<=" />
-                <el-option label="包含" value="contains" v-if="assertion.type === 'json_path'" />
-                <el-option label="不包含" value="not_contains" v-if="assertion.type === 'json_path'" />
-              </el-select>
-              <el-input v-model="assertion.expected" placeholder="期望值" class="assertion-input" />
-              <el-button type="danger" size="small" @click="removeAssertion(index)">
-                <el-icon><component :is="icons.Delete" /></el-icon>
-              </el-button>
-            </div>
-            <el-button type="primary" size="small" @click="addAssertion">
-              <el-icon><component :is="icons.Plus" /></el-icon>
-              添加断言
-            </el-button>
-          </div>
-        </el-form-item>
-      </el-form>
-      
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
-      </template>
-    </el-dialog>
+          <div class="panel-content">
+            <el-form :model="caseForm" label-width="100px" class="edit-form">
+              <el-row :gutter="12">
+                <el-col :span="16">
+                  <el-form-item label="接口名称" required>
+                    <el-input v-model="caseForm.name" placeholder="请输入接口名称" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="请求方式">
+                    <el-select v-model="caseForm.method" style="width: 100%">
+                      <el-option label="GET" value="GET" />
+                      <el-option label="POST" value="POST" />
+                      <el-option label="PUT" value="PUT" />
+                      <el-option label="DELETE" value="DELETE" />
+                      <el-option label="PATCH" value="PATCH" />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-form-item label="请求地址" required>
+                <el-input v-model="caseForm.url" placeholder="如 /api/login" />
+              </el-form-item>
+              <el-row :gutter="12">
+                <el-col :span="8">
+                  <el-form-item label="所属模块">
+                    <el-input v-model="caseForm.module" placeholder="模块" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="所属项目">
+                    <el-select v-model="caseForm.project_id" placeholder="选择项目" style="width: 100%">
+                      <el-option label="不指定" value="" />
+                      <el-option v-for="proj in projects" :key="proj.id" :label="proj.name" :value="proj.id" />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="测试环境">
+                    <el-select v-model="caseForm.environment_id" placeholder="选择环境" clearable style="width: 100%">
+                      <el-option label="不使用环境" value="" />
+                      <el-option v-for="env in environments" :key="env.id" :label="env.name" :value="env.id" />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
 
-    <el-dialog v-model="debugVisible" title="接口调试" width="800px">
-      <div class="debug-container">
-        <el-tabs v-model="debugActiveTab">
-          <el-tab-pane label="请求" name="request">
-            <div class="debug-request">
-              <div class="request-line">
-                <el-select v-model="debugEnvId" class="debug-method">
-                  <el-option v-for="env in environments" :key="env.id" :label="env.name" :value="env.id" />
-                </el-select>
-                <span class="method-tag debug-tag" :class="'method-' + currentCase.method.toLowerCase()">{{ currentCase.method }}</span>
-                <span class="debug-url">{{ getFullUrl() }}</span>
-              </div>
-              
-              <el-divider />
-              
-              <div class="request-section">
-                <h4>请求头</h4>
-                <el-table :data="currentCase.headers" border size="small">
-                  <el-table-column prop="key" label="Key" />
-                  <el-table-column prop="value" label="Value" />
-                </el-table>
-              </div>
-              
-              <div class="request-section">
-                <h4>URL参数</h4>
-                <el-table :data="currentCase.params" border size="small">
-                  <el-table-column prop="key" label="Key" />
-                  <el-table-column prop="value" label="Value" />
-                </el-table>
-              </div>
-              
-              <div class="request-section" v-if="currentCase.body">
-                <h4>请求体</h4>
-                <pre class="code-block">{{ currentCase.body }}</pre>
-              </div>
-              
-              <el-button type="primary" @click="runDebug" :loading="debugLoading">
+              <el-divider content-position="left">请求配置</el-divider>
+
+              <el-form-item label="请求头">
+                <div class="headers-container">
+                  <div v-for="(header, index) in caseForm.headers" :key="index" class="header-row">
+                    <el-input v-model="header.key" placeholder="Header名" class="header-input" />
+                    <el-input v-model="header.value" placeholder="Header值" class="header-input" />
+                    <el-button type="danger" size="small" @click="removeHeader(index)">
+                      <el-icon><component :is="icons.Delete" /></el-icon>
+                    </el-button>
+                  </div>
+                  <el-button type="primary" size="small" @click="addHeader">
+                    <el-icon><component :is="icons.Plus" /></el-icon>
+                    添加请求头
+                  </el-button>
+                </div>
+              </el-form-item>
+
+              <el-form-item label="URL参数">
+                <div class="params-container">
+                  <div v-for="(param, index) in caseForm.params" :key="index" class="param-row">
+                    <el-input v-model="param.key" placeholder="参数名" class="param-input" />
+                    <el-input v-model="param.value" placeholder="参数值" class="param-input" />
+                    <el-button type="danger" size="small" @click="removeParam(index)">
+                      <el-icon><component :is="icons.Delete" /></el-icon>
+                    </el-button>
+                  </div>
+                  <el-button type="primary" size="small" @click="addParam">
+                    <el-icon><component :is="icons.Plus" /></el-icon>
+                    添加参数
+                  </el-button>
+                </div>
+              </el-form-item>
+
+              <el-row :gutter="12">
+                <el-col :span="8">
+                  <el-form-item label="请求体类型">
+                    <el-select v-model="caseForm.body_type" style="width: 100%">
+                      <el-option label="无" value="none" />
+                      <el-option label="JSON" value="json" />
+                      <el-option label="Form Data" value="form" />
+                      <el-option label="Text" value="text" />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="状态">
+                    <el-radio-group v-model="caseForm.status">
+                      <el-radio label="已启用" />
+                      <el-radio label="已禁用" />
+                    </el-radio-group>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <el-form-item label="请求体">
+                <el-input
+                  v-model="caseForm.body"
+                  type="textarea"
+                  :rows="6"
+                  placeholder='请输入请求体内容，如 {"username":"admin"}'
+                  :disabled="caseForm.body_type === 'none'"
+                />
+              </el-form-item>
+
+              <el-divider content-position="left">断言设置</el-divider>
+
+              <el-form-item label="断言">
+                <div class="assertions-container">
+                  <div v-for="(assertion, index) in caseForm.assertions" :key="index" class="assertion-row">
+                    <el-select v-model="assertion.type" class="assertion-select">
+                      <el-option label="响应状态码" value="status_code" />
+                      <el-option label="JSON路径" value="json_path" />
+                      <el-option label="响应时间" value="response_time" />
+                    </el-select>
+                    <el-input v-model="assertion.field" placeholder="字段路径 如 data[0]" class="assertion-input-sm" v-if="assertion.type === 'json_path'" />
+                    <el-select v-model="assertion.operator" class="assertion-op">
+                      <el-option label="等于" value="==" />
+                      <el-option label="不等于" value="!=" />
+                      <el-option label="大于等于" value=">=" />
+                      <el-option label="小于等于" value="<=" />
+                      <el-option label="包含" value="contains" v-if="assertion.type === 'json_path'" />
+                      <el-option label="不包含" value="not_contains" v-if="assertion.type === 'json_path'" />
+                    </el-select>
+                    <el-input v-model="assertion.expected" placeholder="期望值" class="assertion-input" />
+                    <el-button type="danger" size="small" @click="removeAssertion(index)">
+                      <el-icon><component :is="icons.Delete" /></el-icon>
+                    </el-button>
+                  </div>
+                  <el-button type="primary" size="small" @click="addAssertion">
+                    <el-icon><component :is="icons.Plus" /></el-icon>
+                    添加断言
+                  </el-button>
+                </div>
+              </el-form-item>
+            </el-form>
+          </div>
+        </div>
+
+        <!-- 右侧：调试结果 -->
+        <div class="debug-panel">
+          <div class="panel-header">
+            <span class="panel-title">在线调试</span>
+            <div class="debug-actions">
+              <el-select v-model="debugEnvId" placeholder="调试环境" clearable size="small" style="width: 140px">
+                <el-option label="使用用例环境" value="" />
+                <el-option v-for="env in environments" :key="env.id" :label="env.name" :value="env.id" />
+              </el-select>
+              <el-button type="success" @click="runDebugFromForm" :loading="debugLoading">
                 <el-icon><component :is="icons.Promotion" /></el-icon>
-                发送请求
+                发送调试
               </el-button>
             </div>
-          </el-tab-pane>
-          
-          <el-tab-pane label="响应" name="response">
-            <div class="debug-response">
-              <div v-if="debugResult" class="response-result">
-                <div class="response-header">
-                  <el-tag :type="debugResult.response?.status_code === 200 ? 'success' : 'danger'">
-                    {{ debugResult.response?.status_code }}
-                  </el-tag>
-                  <span class="response-time">耗时: {{ debugResult.response?.time || 0 }}ms</span>
+          </div>
+          <div class="panel-content debug-content">
+            <!-- 请求预览 -->
+            <div class="request-preview">
+              <div class="preview-line">
+                <span class="method-tag method-post" :class="'method-' + caseForm.method.toLowerCase()">{{ caseForm.method }}</span>
+                <span class="preview-url">{{ getFormFullUrl() }}</span>
+                <el-tag v-if="debugResult" :type="debugResult.response?.status_code === 200 ? 'success' : 'danger'" size="small" effect="plain">
+                  {{ debugResult.response?.status_code || '未发送' }}
+                </el-tag>
+                <span v-if="debugResult" class="preview-time">耗时: {{ debugResult.response?.time || 0 }}ms</span>
+              </div>
+            </div>
+
+            <el-tabs v-model="debugActiveTab" class="debug-tabs">
+              <el-tab-pane label="响应结果" name="response">
+                <div v-if="debugResult" class="response-result">
+                  <div class="response-stats">
+                    <div class="stat-item">
+                      <span class="stat-label">状态码</span>
+                      <el-tag :type="debugResult.response?.status_code === 200 ? 'success' : 'danger'" size="small">
+                        {{ debugResult.response?.status_code }}
+                      </el-tag>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">耗时</span>
+                      <span class="stat-value">{{ debugResult.response?.time || 0 }}ms</span>
+                    </div>
+                    <div class="stat-item" v-if="debugResult.response?.size">
+                      <span class="stat-label">大小</span>
+                      <span class="stat-value">{{ formatSize(debugResult.response?.size) }}</span>
+                    </div>
+                  </div>
+                  <el-divider content-position="left">响应体</el-divider>
+                  <pre class="code-block">{{ formatResponse(debugResult.response?.body) }}</pre>
                 </div>
-                
-                <el-divider />
-                
-                <div class="response-section">
-                  <h4>响应头</h4>
-                  <el-table :data="responseHeadersList" border size="small">
-                    <el-table-column prop="key" label="Key" />
+                <div v-else class="empty-response">
+                  <el-icon :size="48" color="#909399"><component :is="icons.Document" /></el-icon>
+                  <p>点击"发送调试"查看响应结果</p>
+                </div>
+              </el-tab-pane>
+
+              <el-tab-pane label="响应头" name="headers">
+                <div v-if="debugResult && responseHeadersList.length > 0" class="headers-result">
+                  <el-table :data="responseHeadersList" border size="small" max-height="300">
+                    <el-table-column prop="key" label="Key" width="180" />
                     <el-table-column prop="value" label="Value" />
                   </el-table>
                 </div>
-                
-                <div class="response-section">
-                  <h4>响应体</h4>
-                  <pre class="code-block">{{ formatResponse(debugResult.response?.body) }}</pre>
+                <div v-else class="empty-response">
+                  <el-icon :size="48" color="#909399"><component :is="icons.Document" /></el-icon>
+                  <p>暂无响应头数据</p>
                 </div>
-              </div>
-              <div v-else class="empty-response">
-                <el-icon :size="48" color="#909399"><component :is="icons.Document" /></el-icon>
-                <p>点击"发送请求"查看响应结果</p>
-              </div>
-            </div>
-          </el-tab-pane>
-          
-          <el-tab-pane label="断言结果" name="assertions">
-            <div class="debug-assertions">
-              <div v-if="debugResult && debugResult.assertions.length > 0">
-                <div v-for="(item, index) in debugResult.assertions" :key="index" class="assertion-result">
-                  <div class="assertion-header">
-                    <el-icon :size="16" :color="item.passed ? '#67C23A' : '#F56C6C'">
-                      <component :is="item.passed ? icons.Check : icons.Close" />
+              </el-tab-pane>
+
+              <el-tab-pane label="断言结果" name="assertions">
+                <div v-if="debugResult && debugResult.assertions && debugResult.assertions.length > 0">
+                  <div v-for="(item, index) in debugResult.assertions" :key="index" class="assertion-result">
+                    <div class="assertion-header">
+                      <el-icon :size="16" :color="item.passed ? '#67C23A' : '#F56C6C'">
+                        <component :is="item.passed ? icons.Check : icons.Close" />
+                      </el-icon>
+                      <span>{{ getAssertionDesc(item.assertion) }}</span>
+                      <el-tag :type="item.passed ? 'success' : 'danger'" size="small">
+                        {{ item.passed ? '通过' : '失败' }}
+                      </el-tag>
+                    </div>
+                    <div class="assertion-detail">
+                      <span>期望值: {{ item.assertion.expected }}</span>
+                      <span>实际值: {{ item.actual !== null && item.actual !== undefined ? item.actual : 'null' }}</span>
+                    </div>
+                  </div>
+                  <div class="assertions-summary" :class="{ failed: !debugResult.all_passed }">
+                    <el-icon :size="20" :color="debugResult.all_passed ? '#67C23A' : '#F56C6C'">
+                      <component :is="debugResult.all_passed ? icons.CircleCheck : icons.CircleClose" />
                     </el-icon>
-                    <span>{{ getAssertionDesc(item.assertion) }}</span>
-                    <el-tag :type="item.passed ? 'success' : 'danger'" size="small">
-                      {{ item.passed ? '通过' : '失败' }}
-                    </el-tag>
-                  </div>
-                  <div class="assertion-detail">
-                    <span>期望值: {{ item.assertion.expected }}</span>
-                    <span>实际值: {{ item.actual !== null && item.actual !== undefined ? item.actual : 'null' }}</span>
+                    <span>{{ debugResult.all_passed ? '所有断言通过' : '部分断言失败' }}</span>
                   </div>
                 </div>
-                <div class="assertions-summary">
-                  <el-icon :size="20" :color="debugResult.all_passed ? '#67C23A' : '#F56C6C'">
-                    <component :is="debugResult.all_passed ? icons.CircleCheck : icons.CircleClose" />
-                  </el-icon>
-                  <span>{{ debugResult.all_passed ? '所有断言通过' : '部分断言失败' }}</span>
+                <div v-else class="empty-response">
+                  <el-icon :size="48" color="#909399"><component :is="icons.Document" /></el-icon>
+                  <p>暂无断言或未发送请求</p>
                 </div>
-              </div>
-              <div v-else class="empty-assertions">
-                <el-icon :size="48" color="#909399"><component :is="icons.Document" /></el-icon>
-                <p>点击"发送请求"查看断言结果</p>
-              </div>
-            </div>
-          </el-tab-pane>
-        </el-tabs>
+              </el-tab-pane>
+            </el-tabs>
+          </div>
+        </div>
       </div>
-      
+
       <template #footer>
-        <el-button @click="debugVisible = false">关闭</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSave">保存用例</el-button>
       </template>
     </el-dialog>
   </div>
@@ -610,25 +635,10 @@ const isEdit = ref(false)
 const editingCase = ref(null)
 const selectedCases = ref([])
 
-const debugVisible = ref(false)
-const debugActiveTab = ref('request')
 const debugLoading = ref(false)
 const debugResult = ref(null)
 const debugEnvId = ref('')
-const currentCase = reactive({
-  id: '',
-  name: '',
-  method: 'GET',
-  url: '',
-  module: '',
-  environment_id: '',
-  headers: [],
-  params: [],
-  body: '',
-  body_type: 'none',
-  assertions: [],
-  status: '已启用'
-})
+const debugActiveTab = ref('response')
 
 const caseForm = reactive({
   name: '',
@@ -746,14 +756,67 @@ const handleEdit = (row) => {
 }
 
 const handleDebug = (row) => {
-  Object.assign(currentCase, row)
-  currentCase.headers = row.headers ? JSON.parse(JSON.stringify(row.headers)) : []
-  currentCase.params = row.params ? JSON.parse(JSON.stringify(row.params)) : []
-  currentCase.assertions = row.assertions ? JSON.parse(JSON.stringify(row.assertions)) : []
-  debugEnvId.value = row.environment_id
+  isEdit.value = true
+  editingCase.value = row
+  caseForm.name = row.name
+  caseForm.method = row.method
+  caseForm.url = row.url
+  caseForm.module = row.module
+  caseForm.project_id = row.project_id || currentProjectId.value || ''
+  caseForm.environment_id = row.environment_id
+  caseForm.headers = row.headers ? JSON.parse(JSON.stringify(row.headers)) : []
+  caseForm.params = row.params ? JSON.parse(JSON.stringify(row.params)) : []
+  caseForm.body = row.body || ''
+  caseForm.body_type = row.body_type || 'none'
+  caseForm.assertions = row.assertions ? JSON.parse(JSON.stringify(row.assertions)) : []
+  caseForm.status = row.status
+  debugEnvId.value = row.environment_id || ''
   debugResult.value = null
-  debugActiveTab.value = 'request'
-  debugVisible.value = true
+  debugActiveTab.value = 'response'
+  dialogVisible.value = true
+}
+
+const runDebugFromForm = async () => {
+  debugLoading.value = true
+  debugResult.value = null
+  debugActiveTab.value = 'response'
+
+  try {
+    // 先保存当前表单数据到后端进行调试
+    const payload = {
+      name: caseForm.name,
+      method: caseForm.method,
+      url: caseForm.url,
+      module: caseForm.module,
+      project_id: caseForm.project_id,
+      environment_id: caseForm.environment_id,
+      headers: caseForm.headers,
+      params: caseForm.params,
+      body: caseForm.body,
+      body_type: caseForm.body_type,
+      assertions: caseForm.assertions,
+      status: caseForm.status,
+      debug_env_id: debugEnvId.value || caseForm.environment_id
+    }
+
+    const response = await fetch('/api/v1/api_cases/debug_online', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    const data = await response.json()
+    if (data.success !== false) {
+      debugResult.value = data
+    } else {
+      ElMessage.error(data.message || '调试失败')
+    }
+  } catch (error) {
+    console.error('调试接口失败:', error)
+    ElMessage.error('调试接口失败，请检查网络连接')
+  } finally {
+    debugLoading.value = false
+  }
 }
 
 const handleDelete = async (row) => {
@@ -826,33 +889,18 @@ const handleSave = async () => {
   }
 }
 
-const runDebug = async () => {
-  debugLoading.value = true
-  debugActiveTab.value = 'response'
-  
-  try {
-    const response = await fetch(`/api/v1/api_cases/${currentCase.id}/debug`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ environment_id: debugEnvId.value })
-    })
-    
-    debugResult.value = await response.json()
-    if (!debugResult.value.success) {
-      alert(debugResult.value.message)
-    }
-  } catch (error) {
-    console.error('调试接口失败:', error)
-    alert('调试接口失败，请检查网络连接')
-  } finally {
-    debugLoading.value = false
-  }
+const getFormFullUrl = () => {
+  const envId = debugEnvId.value || caseForm.environment_id
+  const env = environments.value.find(e => e.id === envId)
+  if (!env) return caseForm.url || '请输入URL'
+  return (env.base_url || '').replace(/\/+$/, '') + (caseForm.url || '')
 }
 
-const getFullUrl = () => {
-  const env = environments.value.find(e => e.id === debugEnvId.value)
-  if (!env) return currentCase.url
-  return env.base_url.replace(/\/+$/, '') + currentCase.url
+const formatSize = (bytes) => {
+  if (!bytes) return '0 B'
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / 1024 / 1024).toFixed(2) + ' MB'
 }
 
 const formatResponse = (body) => {
@@ -1613,4 +1661,172 @@ onMounted(async () => {
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);
 }
-</style>
+
+/* 左右分栏布局 */
+.edit-debug-layout {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px;
+  height: 75vh;
+  min-height: 500px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.edit-panel,
+.debug-panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.edit-panel {
+  flex: 1.2 1 0%;
+}
+
+.debug-panel {
+  flex: 1 1 0%;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--color-bg-hover);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.edit-form {
+  padding-right: 8px;
+}
+
+/* 右侧调试面板 */
+.debug-content {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+}
+
+.request-preview {
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.preview-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preview-url {
+  flex: 1;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--theme-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 100px;
+}
+
+.preview-time {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.debug-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.debug-tabs :deep(.el-tabs__content) {
+  flex: 1;
+  overflow: auto;
+}
+
+.debug-tabs :deep(.el-tab-pane) {
+  height: 100%;
+}
+
+.response-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-md);
+  min-width: 80px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.stat-value {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.headers-result {
+  max-height: 300px;
+}
+
+.assertion-op {
+  width: 100px;
+}
+
+.assertion-input-sm {
+  width: 120px;
+}
+
+.debug-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 1200px) {
+  .edit-debug-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+  }
+
+  .edit-panel,
+  .debug-panel {
+    min-height: 400px;
+  }
+}</style>

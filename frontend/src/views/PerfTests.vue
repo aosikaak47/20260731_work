@@ -10,6 +10,10 @@
           <el-icon><component :is="icons.Plus" /></el-icon>
           新建测试
         </el-button>
+        <el-button type="warning" @click="openScenarioDialog">
+          <el-icon><component :is="icons.Connection" /></el-icon>
+          场景编排
+        </el-button>
         <el-button @click="showEnvDialog = true">
           <el-icon><component :is="icons.Setting" /></el-icon>
           环境管理
@@ -187,6 +191,21 @@
               <el-input v-model="form.target_url" placeholder="如：api.example.com/v1/login" />
             </el-form-item>
             <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="选择环境">
+                  <el-select v-model="form.environment_id" placeholder="选择目标环境" clearable style="width: 100%">
+                    <el-option label="不使用环境" value="" />
+                    <el-option v-for="env in environments" :key="env.id" :label="env.name" :value="env.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12" v-if="currentEnv">
+                <el-form-item label="环境地址">
+                  <el-input :model-value="currentEnv.base_url" readonly placeholder="未选择环境" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="16">
               <el-col :span="6">
                 <el-form-item label="并发数">
                   <el-input-number v-model="form.concurrency" :min="1" :max="10000" controls-position="right" style="width: 100%" />
@@ -226,133 +245,6 @@
             <el-form-item label="请求体" v-if="['POST', 'PUT', 'PATCH'].includes(form.method)">
               <el-input v-model="form.body" type="textarea" :rows="4" placeholder='{"username":"admin","password":"***"}' />
             </el-form-item>
-          </el-form>
-        </el-tab-pane>
-
-        <!-- 场景编排 -->
-        <el-tab-pane label="场景编排" name="steps" :disabled="form.test_type !== 'scenario'">
-          <div class="steps-toolbar">
-            <span class="steps-tip">场景编排：按顺序执行多个接口步骤，适用于复杂业务流程压测</span>
-            <div class="steps-actions">
-              <el-button size="small" @click="addStep('request')">
-                <el-icon><component :is="icons.Link" /></el-icon>
-                请求步骤
-              </el-button>
-              <el-button size="small" @click="addStep('assert')">
-                <el-icon><component :is="icons.CircleCheck" /></el-icon>
-                断言步骤
-              </el-button>
-              <el-button size="small" @click="addStep('wait')">
-                <el-icon><component :is="icons.Clock" /></el-icon>
-                等待步骤
-              </el-button>
-            </div>
-          </div>
-          <div class="steps-list">
-            <div v-if="form.steps.length === 0" class="empty-steps">
-              <el-icon :size="48" color="#c0c4cc"><component :is="icons.Document" /></el-icon>
-              <p>暂无步骤，点击上方按钮添加</p>
-            </div>
-            <div v-else v-for="(step, index) in form.steps" :key="step.id" class="step-item">
-              <div class="step-header">
-                <span class="step-index">{{ index + 1 }}</span>
-                <el-select v-model="step.type" size="small" class="step-type">
-                  <el-option label="请求" value="request" />
-                  <el-option label="断言" value="assert" />
-                  <el-option label="等待" value="wait" />
-                </el-select>
-                <el-input v-model="step.name" size="small" class="step-name" :placeholder="'步骤名称'" />
-                <div class="step-actions">
-                  <el-button size="small" text :disabled="index === 0" @click="moveStep(index, -1)">
-                    <el-icon><component :is="icons.ArrowUp" /></el-icon>
-                  </el-button>
-                  <el-button size="small" text :disabled="index === form.steps.length - 1" @click="moveStep(index, 1)">
-                    <el-icon><component :is="icons.ArrowDown" /></el-icon>
-                  </el-button>
-                  <el-button size="small" text type="danger" @click="removeStep(step.id)">
-                    <el-icon><component :is="icons.Delete" /></el-icon>
-                  </el-button>
-                </div>
-              </div>
-              <div class="step-body">
-                <template v-if="step.type === 'request'">
-                  <el-row :gutter="12">
-                    <el-col :span="4">
-                      <el-select v-model="step.method" size="small" style="width: 100%">
-                        <el-option label="GET" value="GET" />
-                        <el-option label="POST" value="POST" />
-                        <el-option label="PUT" value="PUT" />
-                        <el-option label="DELETE" value="DELETE" />
-                      </el-select>
-                    </el-col>
-                    <el-col :span="20">
-                      <el-input v-model="step.url" size="small" placeholder="请求URL" />
-                    </el-col>
-                  </el-row>
-                  <el-input v-model="step.headers" type="textarea" :rows="2" class="step-field" placeholder='请求头 (JSON)' />
-                  <el-input v-model="step.body" type="textarea" :rows="3" class="step-field" placeholder='请求体 (JSON)' />
-                </template>
-                <template v-else-if="step.type === 'assert'">
-                  <el-row :gutter="12">
-                    <el-col :span="8">
-                      <el-select v-model="step.assert_type" size="small" style="width: 100%">
-                        <el-option label="状态码" value="status_code" />
-                        <el-option label="响应时间" value="response_time" />
-                        <el-option label="响应体包含" value="body_contains" />
-                      </el-select>
-                    </el-col>
-                    <el-col :span="16">
-                      <el-input v-model="step.assert_value" size="small" placeholder="断言值，如 200、100、success" />
-                    </el-col>
-                  </el-row>
-                </template>
-                <template v-else-if="step.type === 'wait'">
-                  <el-row :gutter="12">
-                    <el-col :span="8">
-                      <el-input-number v-model="step.wait_time" :min="1" :max="300" controls-position="right" size="small" style="width: 100%" />
-                    </el-col>
-                    <el-col :span="16">
-                      <span class="step-hint">等待该步骤完成后再执行下一步（秒）</span>
-                    </el-col>
-                  </el-row>
-                </template>
-                <el-row :gutter="12" class="step-meta">
-                  <el-col :span="8">
-                    <span class="meta-label">延时:</span>
-                    <el-input-number v-model="step.delay" :min="0" :max="60" :step="0.5" controls-position="right" size="small" style="width: 110px" />
-                  </el-col>
-                  <el-col :span="8">
-                    <span class="meta-label">重试:</span>
-                    <el-input-number v-model="step.retry" :min="0" :max="5" controls-position="right" size="small" style="width: 110px" />
-                  </el-col>
-                  <el-col :span="8">
-                    <span class="meta-label">超时:</span>
-                    <el-input-number v-model="step.timeout" :min="1" :max="300" controls-position="right" size="small" style="width: 110px" />
-                  </el-col>
-                </el-row>
-              </div>
-            </div>
-          </div>
-        </el-tab-pane>
-
-        <!-- 环境配置 -->
-        <el-tab-pane label="环境配置" name="environment">
-          <el-form :model="form" label-width="110px" class="perf-form">
-            <el-form-item label="选择环境">
-              <el-select v-model="form.environment_id" placeholder="选择目标环境" clearable style="width: 100%" @change="handleEnvChange">
-                <el-option label="不使用环境" value="" />
-                <el-option v-for="env in environments" :key="env.id" :label="env.name" :value="env.id" />
-              </el-select>
-            </el-form-item>
-            <el-alert v-if="currentEnv" :title="`当前环境: ${currentEnv.name}`" type="info" :closable="false" show-icon class="env-alert">
-              <div class="env-info">
-                <p><strong>Base URL:</strong> {{ currentEnv.base_url }}</p>
-                <p v-if="currentEnv.description"><strong>描述:</strong> {{ currentEnv.description }}</p>
-                <p v-if="currentEnv.headers"><strong>Headers:</strong> {{ JSON.stringify(currentEnv.headers) }}</p>
-              </div>
-            </el-alert>
-            <el-alert v-else-if="form.environment_id" title="环境不存在或已被删除" type="warning" :closable="false" show-icon />
-            <el-alert v-else title="不使用环境配置，将直接使用URL" type="info" :closable="false" show-icon />
           </el-form>
         </el-tab-pane>
 
@@ -476,6 +368,194 @@
         <el-button type="primary" @click="saveEnv">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 场景编排对话框 -->
+    <el-dialog v-model="showScenarioDialog" title="场景编排 - 多接口串联压测" width="1100px" :close-on-click-modal="false" top="2vh" class="scenario-dialog">
+      <div class="scenario-container">
+        <div class="scenario-header">
+          <el-input v-model="scenarioForm.name" placeholder="场景名称" class="scenario-name-input" />
+          <el-select v-model="scenarioForm.environment_id" placeholder="选择环境" clearable class="scenario-env-select">
+            <el-option label="不使用环境" value="" />
+            <el-option v-for="env in environments" :key="env.id" :label="env.name" :value="env.id" />
+          </el-select>
+          <div class="scenario-actions">
+            <el-button @click="runScenarioDebug" :loading="scenarioDebugLoading">
+              <el-icon><component :is="icons.Promotion" /></el-icon>
+              调试
+            </el-button>
+            <el-button type="primary" @click="runScenarioExecute" :loading="scenarioExecLoading">
+              <el-icon><component :is="icons.VideoPlay" /></el-icon>
+              执行压测
+            </el-button>
+            <el-button type="success" @click="saveScenario">
+              <el-icon><component :is="icons.Check" /></el-icon>
+              保存场景
+            </el-button>
+          </div>
+        </div>
+
+        <div class="steps-toolbar">
+          <span class="steps-tip">按顺序编排多个接口步骤，实现复杂业务流程压测</span>
+          <div class="steps-actions">
+            <el-button size="small" @click="addScenarioStep('request')">
+              <el-icon><component :is="icons.Link" /></el-icon>
+              请求步骤
+            </el-button>
+            <el-button size="small" @click="addScenarioStep('assert')">
+              <el-icon><component :is="icons.CircleCheck" /></el-icon>
+              断言步骤
+            </el-button>
+            <el-button size="small" @click="addScenarioStep('wait')">
+              <el-icon><component :is="icons.Clock" /></el-icon>
+              等待步骤
+            </el-button>
+            <el-button size="small" text @click="expandAllSteps" v-if="scenarioForm.steps.length > 0">
+              <el-icon><component :is="icons.ArrowDown" /></el-icon>
+              全部展开
+            </el-button>
+            <el-button size="small" text @click="collapseAllSteps" v-if="scenarioForm.steps.length > 0">
+              <el-icon><component :is="icons.ArrowUp" /></el-icon>
+              全部折叠
+            </el-button>
+          </div>
+        </div>
+
+        <div class="steps-list scenario-steps-list">
+          <div v-if="scenarioForm.steps.length === 0" class="empty-steps">
+            <el-icon :size="48" color="#c0c4cc"><component :is="icons.Document" /></el-icon>
+            <p>暂无步骤，点击上方按钮添加</p>
+          </div>
+          <el-collapse v-else v-model="expandedSteps" class="steps-collapse">
+            <el-collapse-item v-for="(step, index) in scenarioForm.steps" :key="step.id" :name="step.id" class="step-collapse-item">
+              <template #title>
+                <div class="step-header-inline">
+                  <span class="step-index-badge">{{ index + 1 }}</span>
+                  <el-tag :type="stepTypeTag(step.type)" size="small" effect="light">{{ step.type === 'request' ? '请求' : step.type === 'assert' ? '断言' : '等待' }}</el-tag>
+                  <span class="step-title-text">{{ step.name || `步骤 ${index + 1}` }}</span>
+                  <span v-if="step.type === 'request' && step.url" class="step-url-preview">{{ step.method }} {{ step.url }}</span>
+                </div>
+              </template>
+              <div class="step-body">
+                <div class="step-controls">
+                  <el-select v-model="step.type" size="small" class="step-type-select" @change="onStepTypeChange(step)">
+                    <el-option label="请求" value="request" />
+                    <el-option label="断言" value="assert" />
+                    <el-option label="等待" value="wait" />
+                  </el-select>
+                  <el-input v-model="step.name" size="small" class="step-name-input" placeholder="步骤名称" />
+                  <div class="step-order-actions">
+                    <el-button size="small" text :disabled="index === 0" @click="moveScenarioStep(index, -1)">
+                      <el-icon><component :is="icons.ArrowUp" /></el-icon>
+                    </el-button>
+                    <el-button size="small" text :disabled="index === scenarioForm.steps.length - 1" @click="moveScenarioStep(index, 1)">
+                      <el-icon><component :is="icons.ArrowDown" /></el-icon>
+                    </el-button>
+                    <el-button size="small" text type="danger" @click="removeScenarioStep(step.id)">
+                      <el-icon><component :is="icons.Delete" /></el-icon>
+                    </el-button>
+                  </div>
+                </div>
+                <template v-if="step.type === 'request'">
+                  <el-row :gutter="12">
+                    <el-col :span="4">
+                      <el-select v-model="step.method" size="small" style="width: 100%">
+                        <el-option label="GET" value="GET" />
+                        <el-option label="POST" value="POST" />
+                        <el-option label="PUT" value="PUT" />
+                        <el-option label="DELETE" value="DELETE" />
+                      </el-select>
+                    </el-col>
+                    <el-col :span="20">
+                      <el-input v-model="step.url" size="small" placeholder="请求URL（如 /api/login）" />
+                    </el-col>
+                  </el-row>
+                  <el-input v-model="step.headers" type="textarea" :rows="2" class="step-field" placeholder='请求头 (JSON)' />
+                  <el-input v-model="step.body" type="textarea" :rows="3" class="step-field" placeholder='请求体 (JSON)' />
+                </template>
+                <template v-else-if="step.type === 'assert'">
+                  <el-row :gutter="12">
+                    <el-col :span="8">
+                      <el-select v-model="step.assert_type" size="small" style="width: 100%">
+                        <el-option label="状态码" value="status_code" />
+                        <el-option label="响应时间" value="response_time" />
+                        <el-option label="响应体包含" value="body_contains" />
+                      </el-select>
+                    </el-col>
+                    <el-col :span="16">
+                      <el-input v-model="step.assert_value" size="small" placeholder="断言值，如 200、100、success" />
+                    </el-col>
+                  </el-row>
+                </template>
+                <template v-else-if="step.type === 'wait'">
+                  <el-row :gutter="12">
+                    <el-col :span="8">
+                      <el-input-number v-model="step.wait_time" :min="1" :max="300" controls-position="right" size="small" style="width: 100%" />
+                    </el-col>
+                    <el-col :span="16">
+                      <span class="step-hint">等待该步骤完成后再执行下一步（秒）</span>
+                    </el-col>
+                  </el-row>
+                </template>
+                <el-row :gutter="12" class="step-meta">
+                  <el-col :span="8">
+                    <span class="meta-label">延时:</span>
+                    <el-input-number v-model="step.delay" :min="0" :max="60" :step="0.5" controls-position="right" size="small" style="width: 110px" />
+                  </el-col>
+                  <el-col :span="8">
+                    <span class="meta-label">重试:</span>
+                    <el-input-number v-model="step.retry" :min="0" :max="5" controls-position="right" size="small" style="width: 110px" />
+                  </el-col>
+                  <el-col :span="8">
+                    <span class="meta-label">超时:</span>
+                    <el-input-number v-model="step.timeout" :min="1" :max="300" controls-position="right" size="small" style="width: 110px" />
+                  </el-col>
+                </el-row>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
+        </div>
+
+        <!-- 调试结果 -->
+        <div v-if="scenarioDebugResults.length > 0" class="scenario-results">
+          <el-divider content-position="left">调试结果</el-divider>
+          <div v-for="(result, index) in scenarioDebugResults" :key="index" class="scenario-result-item">
+            <div class="result-step-header">
+              <span class="step-index">{{ index + 1 }}</span>
+              <span class="result-step-name">{{ result.step_name }}</span>
+              <el-tag v-if="result.skipped" type="info" size="small">跳过</el-tag>
+              <el-tag v-else-if="result.passed" type="success" size="small">通过</el-tag>
+              <el-tag v-else type="danger" size="small">失败</el-tag>
+              <span v-if="result.status_code" class="result-meta">状态码: {{ result.status_code }} | 耗时: {{ result.time }}ms</span>
+            </div>
+            <div v-if="result.error" class="result-error">{{ result.error }}</div>
+            <div v-if="result.response_body" class="result-body">
+              <pre class="code-block">{{ formatResponse(result.response_body, 'json') }}</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- 执行结果 -->
+        <div v-if="scenarioExecResult" class="scenario-results">
+          <el-divider content-position="left">压测结果</el-divider>
+          <el-alert :title="scenarioExecResult.message || '执行完成'" :type="scenarioExecResult.success ? 'success' : 'error'" :closable="false" show-icon />
+          <div v-if="scenarioExecResult.report_id" class="exec-report-info">
+            <p>报告ID: {{ scenarioExecResult.report_id }}</p>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <el-button @click="showScenarioDialog = false">关闭</el-button>
+        <el-button type="success" @click="saveScenario">
+          <el-icon><component :is="icons.Check" /></el-icon>
+          保存场景
+        </el-button>
+        <el-button type="primary" @click="runScenarioExecute" :loading="scenarioExecLoading">
+          <el-icon><component :is="icons.VideoPlay" /></el-icon>
+          执行压测
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -488,14 +568,14 @@ import {
   Plus, Search, Refresh, Delete, Edit, VideoPlay,
   DataLine, Lightning, Odometer, Document,
   Connection, Promotion, Warning, Setting,
-  Link, CircleCheck, Clock, ArrowUp, ArrowDown
+  Link, CircleCheck, Clock, ArrowUp, ArrowDown, Check
 } from '@element-plus/icons-vue'
 
 const icons = {
   Plus, Search, Refresh, Delete, Edit, VideoPlay,
   DataLine, Lightning, Odometer, Document,
   Connection, Promotion, Warning, Setting,
-  Link, CircleCheck, Clock, ArrowUp, ArrowDown
+  Link, CircleCheck, Clock, ArrowUp, ArrowDown, Check
 }
 
 const { projects, loadProjects } = useProjects()
@@ -518,6 +598,20 @@ const showEnvDialog = ref(false)
 const envDialogVisible = ref(false)
 const isEditEnv = ref(false)
 const envForm = reactive({ id: '', name: '', base_url: '', headers_text: '{}', description: '' })
+
+// 场景编排状态
+const showScenarioDialog = ref(false)
+const scenarioDebugLoading = ref(false)
+const scenarioExecLoading = ref(false)
+const scenarioDebugResults = ref([])
+const scenarioExecResult = ref(null)
+const expandedSteps = ref([])
+const editingScenarioId = ref(null)
+const scenarioForm = reactive({
+  name: '',
+  environment_id: '',
+  steps: []
+})
 
 const currentEnv = computed(() => {
   if (!form.environment_id) return null
@@ -676,11 +770,15 @@ const handleAdd = () => {
 }
 
 const handleEdit = row => {
+  if (row.test_type === 'scenario' || (row.steps && row.steps.length > 0)) {
+    openScenarioDialogWithData(row)
+    return
+  }
   isEdit.value = true
   editingId.value = row.id
   Object.assign(form, defaultForm(), row)
   if (Array.isArray(row.tags)) form.tags = row.tags.join(',')
-  if (!form.test_type) form.test_type = form.steps && form.steps.length > 0 ? 'scenario' : 'single'
+  if (!form.test_type) form.test_type = 'single'
   activeTab.value = 'basic'
   Object.assign(debugForm, { method: form.method, protocol: form.protocol, target_url: form.target_url, headers: form.headers, body: form.body })
   debugResult.value = null
@@ -891,6 +989,258 @@ const saveEnv = async () => {
   }
 }
 
+// ===== 场景编排 =====
+const stepTypeTag = type => ({ request: 'primary', assert: 'warning', wait: 'info' }[type] || 'info')
+
+const openScenarioDialog = () => {
+  scenarioDebugResults.value = []
+  scenarioExecResult.value = null
+  editingScenarioId.value = null
+  scenarioForm.name = ''
+  scenarioForm.environment_id = ''
+  scenarioForm.steps = []
+  if (scenarioForm.steps.length === 0) {
+    addScenarioStep('request')
+  }
+  expandedSteps.value = scenarioForm.steps.map(s => s.id)
+  showScenarioDialog.value = true
+}
+
+const openScenarioDialogWithData = (row) => {
+  scenarioDebugResults.value = []
+  scenarioExecResult.value = null
+  editingScenarioId.value = row.id
+  scenarioForm.name = row.name || ''
+  scenarioForm.environment_id = row.environment_id || ''
+  scenarioForm.steps = []
+  
+  if (row.steps && Array.isArray(row.steps)) {
+    row.steps.forEach((step, index) => {
+      const stepData = {
+        id: step.id || Date.now() + index + Math.random(),
+        type: step.type || 'request',
+        name: step.name || `${step.type === 'request' ? '请求' : step.type === 'assert' ? '断言' : '等待'}步骤 ${index + 1}`,
+        delay: step.delay || 0,
+        retry: step.retry || 0,
+        timeout: step.timeout || 30
+      }
+      if (step.type === 'request') {
+        stepData.method = step.method || 'GET'
+        stepData.url = step.url || ''
+        stepData.headers = step.headers || '{}'
+        stepData.body = step.body || ''
+      } else if (step.type === 'assert') {
+        stepData.assert_type = step.assert_type || 'status_code'
+        stepData.assert_value = step.assert_value || '200'
+      } else if (step.type === 'wait') {
+        stepData.wait_time = step.wait_time || 5
+      }
+      scenarioForm.steps.push(stepData)
+    })
+  }
+  
+  if (scenarioForm.steps.length === 0) {
+    addScenarioStep('request')
+  }
+  
+  expandedSteps.value = scenarioForm.steps.map(s => s.id)
+  showScenarioDialog.value = true
+}
+
+const addScenarioStep = type => {
+  const stepTypes = {
+    request: { method: 'GET', url: '', headers: '{}', body: '' },
+    assert: { assert_type: 'status_code', assert_value: '200' },
+    wait: { wait_time: 5 }
+  }
+  const newStep = {
+    id: Date.now() + Math.random(),
+    type,
+    name: `${type === 'request' ? '请求' : type === 'assert' ? '断言' : '等待'}步骤 ${scenarioForm.steps.length + 1}`,
+    delay: 0, retry: 0, timeout: 30,
+    ...(stepTypes[type] || {})
+  }
+  scenarioForm.steps.push(newStep)
+  expandedSteps.value.push(newStep.id)
+}
+
+const onStepTypeChange = step => {
+  const defaults = {
+    request: { method: 'GET', url: '', headers: '{}', body: '' },
+    assert: { assert_type: 'status_code', assert_value: '200' },
+    wait: { wait_time: 5 }
+  }
+  const defaultVal = defaults[step.type] || {}
+  Object.keys(defaultVal).forEach(k => { step[k] = defaultVal[k] })
+}
+
+const expandAllSteps = () => { expandedSteps.value = scenarioForm.steps.map(s => s.id) }
+const collapseAllSteps = () => { expandedSteps.value = [] }
+
+const removeScenarioStep = id => {
+  scenarioForm.steps = scenarioForm.steps.filter(s => s.id !== id)
+  expandedSteps.value = expandedSteps.value.filter(sid => sid !== id)
+}
+
+const moveScenarioStep = (index, direction) => {
+  const newIndex = index + direction
+  if (newIndex < 0 || newIndex >= scenarioForm.steps.length) return
+  const temp = scenarioForm.steps[index]
+  scenarioForm.steps.splice(index, 1)
+  scenarioForm.steps.splice(newIndex, 0, temp)
+}
+
+const saveScenario = async () => {
+  if (!scenarioForm.name || !scenarioForm.name.trim()) {
+    ElMessage.warning('请输入场景名称')
+    return
+  }
+  const requestSteps = scenarioForm.steps.filter(s => s.type === 'request')
+  if (requestSteps.length === 0) {
+    ElMessage.warning('请至少添加一个请求步骤')
+    return
+  }
+  
+  const isEditing = editingScenarioId.value !== null
+  try {
+    await ElMessageBox.confirm(`确定要${isEditing ? '更新' : '保存'}场景「${scenarioForm.name}」为性能测试用例吗？`, '保存确认', {
+      confirmButtonText: '保存', cancelButtonText: '取消', type: 'info'
+    })
+  } catch { return }
+
+  try {
+    const payload = {
+      name: scenarioForm.name,
+      project_id: '',
+      target_url: '',
+      method: 'GET',
+      protocol: 'HTTPS',
+      concurrency: 50,
+      ramp_up: 10,
+      duration: 60,
+      max_vusers: 50,
+      think_time: 0,
+      priority: 'medium',
+      test_type: 'scenario',
+      environment_id: scenarioForm.environment_id,
+      tags: ['scenario'],
+      headers: '',
+      body: '',
+      steps: scenarioForm.steps,
+      status: 'draft'
+    }
+
+    const url = isEditing ? `/api/v1/perf/tests/${editingScenarioId.value}` : '/api/v1/perf/tests'
+    const method = isEditing ? 'PUT' : 'POST'
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    const json = await res.json()
+    if (json.success !== false) {
+      ElMessage.success(`场景「${scenarioForm.name}」${isEditing ? '更新' : '保存'}成功`)
+      showScenarioDialog.value = false
+      scenarioForm.name = ''
+      scenarioForm.steps = []
+      scenarioForm.environment_id = ''
+      expandedSteps.value = []
+      editingScenarioId.value = null
+      await loadTests()
+    } else {
+      ElMessage.error(json.message || '保存失败')
+    }
+  } catch (e) {
+    ElMessage.error('保存失败，请检查网络连接')
+  }
+}
+
+const runScenarioDebug = async () => {
+  const requestSteps = scenarioForm.steps.filter(s => s.type === 'request')
+  if (requestSteps.length === 0) {
+    ElMessage.warning('请至少添加一个请求步骤')
+    return
+  }
+  scenarioDebugLoading.value = true
+  scenarioDebugResults.value = []
+  scenarioExecResult.value = null
+  try {
+    const payload = {
+      name: scenarioForm.name || '场景调试',
+      test_type: 'scenario',
+      environment_id: scenarioForm.environment_id,
+      steps: scenarioForm.steps,
+      concurrency: 1,
+      ramp_up: 0,
+      duration: 1
+    }
+    const res = await fetch('/api/v1/perf/tests/scenario_debug', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    const json = await res.json()
+    if (json.success !== false) {
+      scenarioDebugResults.value = json.results || json.steps_results || []
+      ElMessage.success('场景调试完成')
+    } else {
+      ElMessage.error(json.message || json.error || '调试失败')
+    }
+  } catch (e) {
+    ElMessage.error('调试请求失败')
+  } finally {
+    scenarioDebugLoading.value = false
+  }
+}
+
+const runScenarioExecute = async () => {
+  const requestSteps = scenarioForm.steps.filter(s => s.type === 'request')
+  if (requestSteps.length === 0) {
+    ElMessage.warning('请至少添加一个请求步骤')
+    return
+  }
+  try {
+    await ElMessageBox.confirm(`确定要执行场景「${scenarioForm.name || '未命名'}」的压测吗？`, '确认执行', { confirmButtonText: '执行', cancelButtonText: '取消', type: 'info' })
+  } catch { return }
+  scenarioExecLoading.value = true
+  scenarioExecResult.value = null
+  try {
+    const payload = {
+      name: scenarioForm.name || '场景压测',
+      test_type: 'scenario',
+      environment_id: scenarioForm.environment_id,
+      steps: scenarioForm.steps,
+      concurrency: 50,
+      ramp_up: 10,
+      duration: 60
+    }
+    const res = await fetch('/api/v1/perf/tests/scenario_execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    const json = await res.json()
+    const data = json.data || json
+    if (json.success !== false && data.success !== false) {
+      scenarioExecResult.value = {
+        success: true,
+        message: `场景压测已触发执行`,
+        report_id: data.report_id || data.reportId || data.id || '-'
+      }
+      ElMessage.success('压测执行已触发')
+      await loadDashboard()
+    } else {
+      scenarioExecResult.value = { success: false, message: data.message || json.message || '执行失败' }
+      ElMessage.error(data.message || json.message || '执行失败')
+    }
+  } catch (e) {
+    scenarioExecResult.value = { success: false, message: '执行请求失败' }
+    ElMessage.error('执行请求失败')
+  } finally {
+    scenarioExecLoading.value = false
+  }
+}
+
 watch(dialogVisible, val => { if (val && !statusChartInstance) nextTick(initStatusChart) })
 
 onMounted(async () => {
@@ -978,6 +1328,50 @@ onUnmounted(() => {
 .error-message { color: #6b7280; font-size: 13px; }
 
 .env-toolbar { margin-bottom: 12px; }
+
+/* 场景编排对话框 */
+.scenario-container { display: flex; flex-direction: column; max-height: 75vh; }
+.scenario-header { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 8px; flex-shrink: 0; }
+.scenario-name-input { width: 200px; flex-shrink: 0; }
+.scenario-env-select { width: 180px; flex-shrink: 0; }
+.scenario-actions { display: flex; gap: 8px; margin-left: auto; }
+.steps-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
+.steps-tip { font-size: 13px; color: #6b7280; }
+.steps-actions { display: flex; gap: 8px; }
+
+/* 折叠面板样式 */
+.steps-list { flex: 1; overflow-y: auto; min-height: 200px; }
+.steps-collapse { border: none; }
+.step-collapse-item { margin-bottom: 8px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+.step-collapse-item :deep(.el-collapse-item__header) { padding: 0 12px; height: 44px; background: #f9fafb; border-bottom: none; }
+.step-collapse-item :deep(.el-collapse-item__wrap) { border-bottom: none; }
+.step-collapse-item :deep(.el-collapse-item__content) { padding: 12px; }
+
+.step-header-inline { display: flex; align-items: center; gap: 8px; width: 100%; }
+.step-index-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #6366f1; color: white; border-radius: 4px; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.step-title-text { font-weight: 500; font-size: 14px; color: #111827; }
+.step-url-preview { font-size: 12px; color: #6b7280; font-family: monospace; margin-left: auto; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.step-body { display: flex; flex-direction: column; gap: 10px; }
+.step-controls { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.step-type-select { width: 120px; flex-shrink: 0; }
+.step-name-input { flex: 1; }
+.step-order-actions { display: flex; gap: 4px; }
+
+.step-field { margin-top: 8px; }
+.step-meta { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e5e7eb; }
+
+.scenario-results { margin-top: 16px; flex-shrink: 0; }
+.scenario-result-item { border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+.result-step-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
+.result-step-name { font-weight: 600; font-size: 13px; color: #374151; }
+.result-meta { font-size: 12px; color: #6b7280; margin-left: auto; }
+.result-error { padding: 8px 12px; color: #ef4444; font-size: 13px; }
+.result-body { max-height: 200px; overflow: auto; }
+.exec-report-info { margin-top: 8px; font-size: 13px; color: #6b7280; }
+
+.empty-steps { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; color: #9ca3af; }
+.empty-steps p { margin-top: 12px; }
 
 @media (max-width: 768px) {
   .filter-bar { flex-direction: column; align-items: stretch; }

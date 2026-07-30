@@ -27,5 +27,13 @@
       "Content-Type": "application/json"
     },
     "description": "生产环境"
+  },
+  {
+    "name": "教师教学档案袋",
+    "base_url": "http://192.168.100.50:54818",
+    "headers": {},
+    "description": "",
+    "id": "env_004",
+    "created_at": "2026-07-30 09:05:54"
   }
 ]

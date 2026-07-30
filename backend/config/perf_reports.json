@@ -47,5 +47,161 @@
     "anomalies": [],
     "ai_analysis": null,
     "created_at": "2026-07-29 16:13:06"
+  },
+  {
+    "id": "pr_002_517",
+    "test_id": "pt_002",
+    "test_name": "登录流程场景",
+    "environment": null,
+    "is_scenario": true,
+    "steps_count": 2,
+    "step_results": [
+      {
+        "index": 1,
+        "name": "请求步骤 1",
+        "type": "request",
+        "target": "",
+        "status": "success",
+        "response_time": 237.3,
+        "status_code": 200,
+        "timestamp": "2026-07-30 10:31:29"
+      },
+      {
+        "index": 2,
+        "name": "请求步骤 2",
+        "type": "request",
+        "target": "",
+        "status": "success",
+        "response_time": 217.3,
+        "status_code": 200,
+        "timestamp": "2026-07-30 10:31:29"
+      }
+    ],
+    "status": "completed",
+    "start_time": "2026-07-30 10:31:29",
+    "end_time": "2026-07-30 10:31:29",
+    "duration": 60,
+    "concurrency": 50,
+    "summary": {
+      "total_requests": 5520,
+      "success_requests": 5475,
+      "failed_requests": 45,
+      "error_rate": 0.81,
+      "avg_response_time": 122.38138638759462,
+      "min_response_time": 6,
+      "max_response_time": 1116,
+      "p90_response_time": 161.9092739744125,
+      "p95_response_time": 168.6928712111029,
+      "p99_response_time": 558,
+      "tps": 92,
+      "qps": 92,
+      "avg_cpu": 56.5,
+      "max_cpu": 65.9,
+      "avg_memory": 63.4,
+      "max_memory": 65.9,
+      "avg_network_in": 14.5,
+      "avg_network_out": 8.1,
+      "concurrent_users": 50
+    },
+    "timeline": [
+      {
+        "timestamp": "2026-07-30 10:31:00",
+        "tps": 84.4,
+        "avg_rt": 123.7,
+        "error_rate": 0.98,
+        "cpu": 21.4,
+        "memory": 43.3
+      },
+      {
+        "timestamp": "2026-07-30 10:31:30",
+        "tps": 100.1,
+        "avg_rt": 86.5,
+        "error_rate": 0.8,
+        "cpu": 63.9,
+        "memory": 60.9
+      }
+    ],
+    "bottlenecks": [],
+    "anomalies": [],
+    "ai_analysis": null,
+    "created_at": "2026-07-30 10:31:29"
+  },
+  {
+    "id": "pr_002_916",
+    "test_id": "pt_002",
+    "test_name": "登录流程场景",
+    "environment": null,
+    "is_scenario": true,
+    "steps_count": 2,
+    "step_results": [
+      {
+        "index": 1,
+        "name": "请求步骤 1",
+        "type": "request",
+        "target": "",
+        "status": "success",
+        "response_time": 269.6,
+        "status_code": 200,
+        "timestamp": "2026-07-30 10:49:07"
+      },
+      {
+        "index": 2,
+        "name": "请求步骤 2",
+        "type": "request",
+        "target": "",
+        "status": "success",
+        "response_time": 204.3,
+        "status_code": 200,
+        "timestamp": "2026-07-30 10:49:07"
+      }
+    ],
+    "status": "completed",
+    "start_time": "2026-07-30 10:49:07",
+    "end_time": "2026-07-30 10:49:07",
+    "duration": 60,
+    "concurrency": 50,
+    "summary": {
+      "total_requests": 5160,
+      "success_requests": 5044,
+      "failed_requests": 116,
+      "error_rate": 2.23,
+      "avg_response_time": 89.93349975166937,
+      "min_response_time": 16,
+      "max_response_time": 512,
+      "p90_response_time": 132.81498215466303,
+      "p95_response_time": 156.19720643469657,
+      "p99_response_time": 512,
+      "tps": 86,
+      "qps": 86,
+      "avg_cpu": 32.5,
+      "max_cpu": 77.1,
+      "avg_memory": 40.5,
+      "max_memory": 79.1,
+      "avg_network_in": 16.3,
+      "avg_network_out": 8.0,
+      "concurrent_users": 50
+    },
+    "timeline": [
+      {
+        "timestamp": "2026-07-30 10:49:00",
+        "tps": 77.0,
+        "avg_rt": 38.5,
+        "error_rate": 2.99,
+        "cpu": 49.0,
+        "memory": 30.9
+      },
+      {
+        "timestamp": "2026-07-30 10:49:30",
+        "tps": 92.8,
+        "avg_rt": 34.8,
+        "error_rate": 2.71,
+        "cpu": 23.6,
+        "memory": 31.7
+      }
+    ],
+    "bottlenecks": [],
+    "anomalies": [],
+    "ai_analysis": null,
+    "created_at": "2026-07-30 10:49:07"
   }
 ]

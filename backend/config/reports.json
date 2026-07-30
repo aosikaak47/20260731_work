@@ -1,5 +1,80 @@
 [
   {
+    "id": "4f090c12-3214-4027-a1c6-4b2694697c0d",
+    "scenario_id": "fa4b9528-d087-4619-adcf-18f626e5ccdb",
+    "scenario_name": "考核任务详情查询",
+    "environment_id": "2",
+    "environment_name": "测试环境",
+    "start_time": "2026-07-30 09:04:16",
+    "end_time": "2026-07-30 09:04:16",
+    "total_time": 79.31,
+    "total_steps": 1,
+    "passed_steps": 0,
+    "failed_steps": 1,
+    "skipped_steps": 0,
+    "all_passed": false,
+    "status": "失败",
+    "steps": [
+      {
+        "step": {
+          "id": "1785217633503",
+          "api_case_id": "756a8d57-ce27-477e-8252-6f0c686150a1",
+          "name": "分页查询待审核考核任务",
+          "method": "GET",
+          "url": "/jzgkh/assessmentTask/queryPageExamine",
+          "waitTime": 0,
+          "retryCount": 0,
+          "skip": false,
+          "request_body": "",
+          "extract_params": []
+        },
+        "skipped": false,
+        "passed": false,
+        "request_body": null,
+        "response": {
+          "status_code": 200,
+          "headers": {
+            "Server": "nginx/1.16.1",
+            "Date": "Thu, 30 Jul 2026 01:04:20 GMT",
+            "Content-Type": "text/html",
+            "Last-Modified": "Wed, 29 Jul 2026 03:22:53 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive",
+            "Vary": "Accept-Encoding",
+            "ETag": "W/\"6a69720d-1dc7\"",
+            "Content-Encoding": "gzip"
+          },
+          "body": "<!DOCTYPE html><html><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content=\"chrome=1\"><meta name=renderer content=webkit><meta name=viewport content=\"width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no\"><link rel=icon href=/favicon.ico><title>跨校区综合发展平台</title><script>window._CONFIG = {}\r\n    window._CONFIG['schoolBgName'] = 'tysfxy'\r\n            // 验证码图片 websocket工具函数地址\nwindow._CONFIG['domianURL'] = 'http://36.133.61.111:18004/prod-api'\n// 图片、资源地址\nwindow._CONFIG['resourceIp'] = 'http://36.133.61.111:18004/prod-api'\n    // 青岛电子 学生同步闸机地址\r\n    window._CONFIG['mqtt'] = 'http://192.168.5.23:8092/jeecg-boot/mqtt.html'\r\n    // 办事大厅（bsdtvue项目）跨项目跳转路径（同 nginx 部署，使用相对路径）\r\n    window._CONFIG['VUE_APP_BSDT_TRANSACT_PATH'] = '/bsdt/qddz/transactContent'</script><link href=/static/css/chunk-15868c88.b1a08a5c.css rel=prefetch><link href=/static/css/chunk-180f4db7.3cac1a3b.css rel=prefetch><link href=/static/css/chunk-1930d9e5.af7ba854.css rel=prefetch><link href=/static/css/chunk-1a398038.30c04a57.css rel=prefetch><link href=/static/css/chunk-1d46ee42.e7b27c95.css rel=prefetch><link href=/static/css/chunk-38217502.d3d3c509.css rel=prefetch><link href=/static/css/chunk-6ae4c626.8adb09a8.css rel=prefetch><link href=/static/css/chunk-6c51e340.54513e43.css rel=prefetch><link href=/static/css/chunk-93f408ec.dbc9b77f.css rel=prefetch><link href=/static/css/chunk-c78dba4e.d543ccc4.css rel=prefetch><link href=/static/js/chunk-15868c88.55ddb94d.js rel=prefetch><link href=/static/js/chunk-180f4db7.a451dd9e.js rel=prefetch><link href=/static/js/chunk-1930d9e5.ff94055d.js rel=prefetch><link href=/static/js/chunk-1a398038.cce23c94.js rel=prefetch><link href=/static/js/chunk-1d46ee42.c2ede85b.js rel=prefetch><link href=/static/js/chunk-38217502.4020b5f5.js rel=prefetch><link href=/static/js/chunk-6ae4c626.0fd31bfb.js rel=prefetch><link href=/static/js/chunk-6c51e340.2d33efa7.js rel=prefetch><link href=/static/js/chunk-93f408ec.853f5575.js rel=prefetch><link href=/static/js/chunk-c78dba4e.b239f917.js rel=prefetch><link href=/static/js/chunk-jwgl.06e158d8.js rel=prefetch><link href=/static/css/chunk-elementUI.717c90ab.css rel=stylesheet><link href=/static/css/chunk-codemirror.dd7eb90b.css rel=stylesheet><link href=/static/css/chunk-pdf.e114c0b0.css rel=stylesheet><link href=/static/css/chunk-calendar.848f2f71.css rel=stylesheet><link href=/static/css/chunk-video.b83f15dd.css rel=stylesheet><link href=/static/css/chunk-gantt.ca4ea9de.css rel=stylesheet><link href=/static/css/chunk-libs.209fd9ce.css rel=stylesheet><link href=/static/css/app.4d96d212.css rel=stylesheet></head><body><noscript><strong>We're sorry but 跨校区综合发展平台 doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id=app></div><script>(function(e){function n(n){for(var r,c,a=n[0],i=n[1],d=n[2],f=0,l=[];f<a.length;f++)c=a[f],u[c]&&l.push(u[c][0]),u[c]=0;for(r in i)Object.prototype.hasOwnProperty.call(i,r)&&(e[r]=i[r]);h&&h(n);while(l.length)l.shift()();return o.push.apply(o,d||[]),t()}function t(){for(var e,n=0;n<o.length;n++){for(var t=o[n],r=!0,c=1;c<t.length;c++){var a=t[c];0!==u[a]&&(r=!1)}r&&(o.splice(n--,1),e=i(i.s=t[0]))}return e}var r={},c={runtime:0},u={runtime:0},o=[];function a(e){return i.p+\"static/js/\"+({\"chunk-jwgl\":\"chunk-jwgl\"}[e]||e)+\".\"+{\"chunk-15868c88\":\"55ddb94d\",\"chunk-180f4db7\":\"a451dd9e\",\"chunk-1930d9e5\":\"ff94055d\",\"chunk-38217502\":\"4020b5f5\",\"chunk-6ae4c626\":\"0fd31bfb\",\"chunk-6c51e340\":\"2d33efa7\",\"chunk-c78dba4e\":\"b239f917\",\"chunk-jwgl\":\"06e158d8\",\"chunk-1a398038\":\"cce23c94\",\"chunk-1d46ee42\":\"c2ede85b\",\"chunk-93f408ec\":\"853f5575\"}[e]+\".js\"}function i(n){if(r[n])return r[n].exports;var t=r[n]={i:n,l:!1,exports:{}};return e[n].call(t.exports,t,t.exports,i),t.l=!0,t.exports}i.e=function(e){var n=[],t={\"chunk-15868c88\":1,\"chunk-180f4db7\":1,\"chunk-1930d9e5\":1,\"chunk-38217502\":1,\"chunk-6ae4c626\":1,\"chunk-6c51e340\":1,\"chunk-c78dba4e\":1,\"chunk-1a398038\":1,\"chunk-1d46ee42\":1,\"chunk-93f408ec\":1};c[e]?n.push(c[e]):0!==c[e]&&t[e]&&n.push(c[e]=new Promise((function(n,t){for(var r=\"static/css/\"+({\"chunk-jwgl\":\"chunk-jwgl\"}[e]||e)+\".\"+{\"chunk-15868c88\":\"b1a08a5c\",\"chunk-180f4db7\":\"3cac1a3b\",\"chunk-1930d9e5\":\"af7ba854\",\"chunk-38217502\":\"d3d3c509\",\"chunk-6ae4c626\":\"8adb09a8\",\"chunk-6c51e340\":\"54513e43\",\"chunk-c78dba4e\":\"d543ccc4\",\"chunk-jwgl\":\"31d6cfe0\",\"chunk-1a398038\":\"30c04a57\",\"chunk-1d46ee42\":\"e7b27c95\",\"chunk-93f408ec\":\"dbc9b77f\"}[e]+\".css\",u=i.p+r,o=document.getElementsByTagName(\"link\"),a=0;a<o.length;a++){var d=o[a],f=d.getAttribute(\"data-href\")||d.getAttribute(\"href\");if(\"stylesheet\"===d.rel&&(f===r||f===u))return n()}var l=document.getElementsByTagName(\"style\");for(a=0;a<l.length;a++){d=l[a],f=d.getAttribute(\"data-href\");if(f===r||f===u)return n()}var h=document.createElement(\"link\");h.rel=\"stylesheet\",h.type=\"text/css\",h.onload=n,h.onerror=function(n){var r=n&&n.target&&n.target.src||u,o=new Error(\"Loading CSS chunk \"+e+\" failed.\\n(\"+r+\")\");o.code=\"CSS_CHUNK_LOAD_FAILED\",o.request=r,delete c[e],h.parentNode.removeChild(h),t(o)},h.href=u;var s=document.getElementsByTagName(\"head\")[0];s.appendChild(h)})).then((function(){c[e]=0})));var r=u[e];if(0!==r)if(r)n.push(r[2]);else{var o=new Promise((function(n,t){r=u[e]=[n,t]}));n.push(r[2]=o);var d,f=document.createElement(\"script\");f.charset=\"utf-8\",f.timeout=120,i.nc&&f.setAttribute(\"nonce\",i.nc),f.src=a(e),d=function(n){f.onerror=f.onload=null,clearTimeout(l);var t=u[e];if(0!==t){if(t){var r=n&&(\"load\"===n.type?\"missing\":n.type),c=n&&n.target&&n.target.src,o=new Error(\"Loading chunk \"+e+\" failed.\\n(\"+r+\": \"+c+\")\");o.type=r,o.request=c,t[1](o)}u[e]=void 0}};var l=setTimeout((function(){d({type:\"timeout\",target:f})}),12e4);f.onerror=f.onload=d,document.head.appendChild(f)}return Promise.all(n)},i.m=e,i.c=r,i.d=function(e,n,t){i.o(e,n)||Object.defineProperty(e,n,{enumerable:!0,get:t})},i.r=function(e){\"undefined\"!==typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:\"Module\"}),Object.defineProperty(e,\"__esModule\",{value:!0})},i.t=function(e,n){if(1&n&&(e=i(e)),8&n)return e;if(4&n&&\"object\"===typeof e&&e&&e.__esModule)return e;var t=Object.create(null);if(i.r(t),Object.defineProperty(t,\"default\",{enumerable:!0,value:e}),2&n&&\"string\"!=typeof e)for(var r in e)i.d(t,r,function(n){return e[n]}.bind(null,r));return t},i.n=function(e){var n=e&&e.__esModule?function(){return e[\"default\"]}:function(){return e};return i.d(n,\"a\",n),n},i.o=function(e,n){return Object.prototype.hasOwnProperty.call(e,n)},i.p=\"/\",i.oe=function(e){throw console.error(e),e};var d=window[\"webpackJsonp\"]=window[\"webpackJsonp\"]||[],f=d.push.bind(d);d.push=n,d=d.slice();for(var l=0;l<d.length;l++)n(d[l]);var h=f;t()})([]);</script><script src=/static/js/chunk-elementUI.2b14452e.js></script><script src=/static/js/chunk-echarts.36b5c104.js></script><script src=/static/js/chunk-tinymce.f8ed775b.js></script><script src=/static/js/chunk-codemirror.3416b971.js></script><script src=/static/js/chunk-pdf.c6daf8bd.js></script><script src=/static/js/chunk-highcharts.72941bb1.js></script><script src=/static/js/chunk-calendar.37d14474.js></script><script src=/static/js/chunk-video.1f6b29b9.js></script><script src=/static/js/chunk-xlsx.a13b46fa.js></script><script src=/static/js/chunk-gantt.25ebaf25.js></script><script src=/static/js/chunk-moment.3821213c.js></script><script src=/static/js/chunk-libs.b19e6d00.js></script><script src=/static/js/app.56f646fd.js></script></body></html>",
+          "body_type": "text",
+          "time": 79.31
+        },
+        "assertions": [
+          {
+            "assertion": {
+              "type": "status_code",
+              "expected": 200,
+              "operator": "=="
+            },
+            "passed": true,
+            "actual": 200
+          },
+          {
+            "assertion": {
+              "type": "json_path",
+              "field": "code",
+              "expected": 0,
+              "operator": "=="
+            },
+            "passed": false,
+            "actual": null
+          }
+        ],
+        "extracted_vars": {},
+        "time": 79.31
+      }
+    ]
+  },
+  {
     "id": "c9f79c14-1a64-413b-9960-62444ed1ef69",
     "scenario_id": "fa4b9528-d087-4619-adcf-18f626e5ccdb",
     "scenario_name": "考核任务详情查询",

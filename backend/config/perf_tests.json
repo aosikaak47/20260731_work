@@ -59,5 +59,109 @@
         "body": "{\"tableName\":\"diversified_tandards_library\",\"pageSize\":1,\"pageNo\":1,\"map\":{\"contents_guid\":\"1\"},\"roleCode\":\"admin\"}"
       }
     ]
+  },
+  {
+    "name": "登录流程场景",
+    "project_id": "",
+    "target_url": "",
+    "method": "GET",
+    "protocol": "HTTPS",
+    "concurrency": 50,
+    "ramp_up": 10,
+    "duration": 60,
+    "max_vusers": 50,
+    "think_time": 0,
+    "priority": "medium",
+    "test_type": "scenario",
+    "environment_id": "",
+    "tags": [
+      "scenario"
+    ],
+    "headers": "",
+    "body": "",
+    "steps": [
+      {
+        "id": 1785377838778.8906,
+        "type": "request",
+        "name": "请求步骤 1",
+        "delay": 0,
+        "retry": 0,
+        "timeout": 30,
+        "method": "GET",
+        "url": "",
+        "headers": "{}",
+        "body": ""
+      },
+      {
+        "id": 1785377899717.0642,
+        "type": "request",
+        "name": "请求步骤 2",
+        "delay": 0,
+        "retry": 0,
+        "timeout": 30,
+        "method": "GET",
+        "url": "",
+        "headers": "{}",
+        "body": ""
+      }
+    ],
+    "status": "running",
+    "id": "pt_002",
+    "created_at": "2026-07-30 10:20:43",
+    "updated_at": "2026-07-30 10:20:43",
+    "last_run": "2026-07-30 10:49:07",
+    "last_run_id": "pr_002_916"
+  },
+  {
+    "name": "111",
+    "project_id": "",
+    "target_url": "",
+    "method": "GET",
+    "protocol": "HTTPS",
+    "concurrency": 50,
+    "ramp_up": 10,
+    "duration": 60,
+    "max_vusers": 50,
+    "think_time": 0,
+    "priority": "medium",
+    "test_type": "scenario",
+    "environment_id": "",
+    "tags": [
+      "scenario"
+    ],
+    "headers": "",
+    "body": "",
+    "steps": [
+      {
+        "id": 1785378750041.8293,
+        "type": "request",
+        "name": "请求步骤 1",
+        "delay": 0,
+        "retry": 0,
+        "timeout": 30,
+        "method": "GET",
+        "url": "111",
+        "headers": "{}",
+        "body": ""
+      },
+      {
+        "id": 1785378763726.855,
+        "type": "request",
+        "name": "请求步骤 2",
+        "delay": 0,
+        "retry": 0,
+        "timeout": 30,
+        "method": "GET",
+        "url": "1111",
+        "headers": "{}",
+        "body": ""
+      }
+    ],
+    "status": "draft",
+    "id": "pt_003",
+    "created_at": "2026-07-30 10:32:54",
+    "updated_at": "2026-07-30 10:32:54",
+    "last_run": null,
+    "last_run_id": null
   }
 ]
