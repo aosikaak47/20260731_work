@@ -5943,31 +5943,10 @@ async def execute_ui_case(case_id: str, request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 # UI测试任务API
-DEFAULT_UI_TASKS = [
-    {
-        "id": "1",
-        "name": "登录模块回归测试",
-        "project_id": "1",
-        "description": "对登录模块进行完整回归测试",
-        "case_ids": ["1"],
-        "browser": "chrome",
-        "headless": True,
-        "status": "pending",
-        "schedule": None,
-        "created_at": "2026-07-20 10:00",
-        "updated_at": "2026-07-20 10:00",
-        "last_run": None,
-        "last_result": None
-    }
-]
-
 @app.get("/api/v1/ui/tasks")
 async def get_ui_tasks(project_id: str = None):
     try:
         tasks = load_ui_tasks()
-        if not tasks:
-            save_ui_tasks(DEFAULT_UI_TASKS)
-            tasks = DEFAULT_UI_TASKS
         
         if project_id:
             tasks = [t for t in tasks if t.get("project_id") == project_id]
