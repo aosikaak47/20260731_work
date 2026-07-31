@@ -120,7 +120,6 @@ const menuItems = [
     name: 'UI自动化测试',
     icon: icons.Monitor,
     children: [
-      { id: 'ui-elements', name: '页面元素管理', path: '/ui-elements', icon: icons.Grid },
       { id: 'ui-cases', name: 'UI用例编排', path: '/ui-cases', icon: icons.Document },
       { id: 'ui-tasks', name: 'UI场景任务', path: '/ui-tasks', icon: icons.List },
       { id: 'ui-reports', name: 'UI执行报告', path: '/ui-reports', icon: icons.DataLine },

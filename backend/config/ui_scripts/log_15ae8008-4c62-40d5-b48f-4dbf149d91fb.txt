@@ -1,0 +1,6 @@
+[Recorder] Starting browser, url=http://192.168.100.167/hxkr/#/config/appCenter
+[Recorder] Browser launched, navigating to http://192.168.100.167/hxkr/#/config/appCenter
+[Recorder] Page loaded, waiting for user actions...
+[Recorder] Captured action: click - #form_item_username
+[Recorder] Captured action: click - #form_item_username
+[Recorder] Captured action: input - #form_item_username

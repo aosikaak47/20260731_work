@@ -1,0 +1,4 @@
+[Recorder] Starting browser, url=https://www.baidu.com
+[Recorder] Browser launched, navigating to https://www.baidu.com
+[Recorder] Page loaded, waiting for user actions...
+[Recorder] Session ended. Total actions: 0

@@ -1,0 +1,17 @@
+[Recorder] Starting browser, url=https://www.baidu.com/?tn=49055317_59_hao_pg
+[Recorder] Browser launched, navigating to https://www.baidu.com/?tn=49055317_59_hao_pg
+[Recorder] Page loaded, waiting for user actions...
+[Recorder] Captured action: click - #chat-submit-button
+[Recorder] Captured action: click - #chat-submit-button
+[Recorder] Captured action: navigate - https://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&rsv_idx=1&tn=baidu&wd=%E9%87%8D%E5%BA%86%E5%85%A5%E5%A2%83%E6%B8%B8%E7%83%AD%E5%BA%A6%E6%94%80%E5%8D%87&fenlei=256&rsv_pq=0x8c225a070004ea71&rsv_t=ce52SH0tmt5RZwTF0EKlvV3zq7bBw0QtLQV8mOKQoPGqqBMVMglHCkTDUbqe&rqlang=en&rsv_enter=1&rsv_dl=ikrec_click_iph_igh_notyyc_gsnd&rsv_btype=i&rsv_sug9=eb_1
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2)
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2)
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div > p
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2)
+[Recorder] Captured action: click - div#spin-0 > div:nth-of-type(2) > div:nth-of-type(2) > div > div:nth-of-type(2)

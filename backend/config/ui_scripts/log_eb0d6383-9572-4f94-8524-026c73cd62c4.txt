@@ -1,0 +1,21 @@
+[Recorder] Starting browser, url=http://192.168.100.50:54815/#/interFaceManagement
+[Recorder] Browser launched, navigating to http://192.168.100.50:54815/#/interFaceManagement
+[Recorder] Captured action: navigate - http://192.168.100.50:54815/#/indexTopLevel
+[Recorder] Page loaded, waiting for user actions...
+[Recorder] Captured action: click - input[name="username"]
+[Recorder] Captured action: input - input[name="username"]
+[Recorder] Captured action: input - input[name="username"]
+[Recorder] Captured action: input - input[name="username"]
+[Recorder] Captured action: input - input[name="username"]
+[Recorder] Captured action: click - input[name="password"]
+[Recorder] Captured action: click - input[name="username"]
+[Recorder] Captured action: click - input[name="password"]
+[Recorder] Captured action: input - input[name="password"]
+[Recorder] Captured action: input - input[name="password"]
+[Recorder] Captured action: input - input[name="password"]
+[Recorder] Captured action: click - div > div > div:nth-of-type(2) > div > div
+[Recorder] Captured action: click - div > div > span:nth-of-type(2) > span > i
+[Recorder] Captured action: click - input[name="password"]
+[Recorder] Captured action: input - input[name="password"]
+[Recorder] Captured action: click - div > div > div:nth-of-type(2) > div > div
+[Recorder] Captured action: navigate - http://192.168.100.50:54815/#/index

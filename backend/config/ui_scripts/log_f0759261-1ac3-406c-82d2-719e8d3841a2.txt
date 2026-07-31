@@ -1,0 +1,35 @@
+[Recorder] Starting browser, url=http://192.168.100.167/hxkr/#/config/appCenter
+[Recorder] Browser launched, navigating to http://192.168.100.167/hxkr/#/config/appCenter
+[Recorder] Page loaded, waiting for user actions...
+[Recorder] Captured action: navigate - http://192.168.100.167/hxkr/#/passport/login
+[Recorder] Captured action: click - #form_item_username
+[Recorder] Captured action: click - #form_item_username
+[Recorder] Captured action: input - #form_item_username
+[Recorder] Captured action: click - #form_item_password
+[Recorder] Captured action: input - #form_item_password
+[Recorder] Captured action: input - #form_item_password
+[Recorder] Captured action: click - #form_item_captcha
+[Recorder] Captured action: input - #form_item_captcha
+[Recorder] Captured action: click - div > div > label > span:nth-of-type(1) > input
+[Recorder] Captured action: click - div > div > label > span:nth-of-type(1) > input
+[Recorder] Captured action: input - div > div > label > span:nth-of-type(1) > input
+[Recorder] Captured action: click - div > div > div > div > button
+[Recorder] Captured action: click - div > span > span:nth-of-type(2) > span > svg
+[Recorder] Captured action: click - #form_item_password
+[Recorder] Captured action: input - #form_item_password
+[Recorder] Captured action: click - #form_item_captcha
+[Recorder] Captured action: click - #form_item_captcha
+[Recorder] Captured action: input - #form_item_captcha
+[Recorder] Captured action: input - #form_item_captcha
+[Recorder] Captured action: input - #form_item_captcha
+[Recorder] Captured action: click - div > div > div > div > button
+[Recorder] Captured action: click - #form_item_captcha
+[Recorder] Captured action: click - #form_item_captcha
+[Recorder] Captured action: click - #form_item_captcha
+[Recorder] Captured action: click - #form_item_captcha
+[Recorder] Captured action: input - #form_item_captcha
+[Recorder] Captured action: click - div > div > div > div > button
+[Recorder] Captured action: navigate - http://192.168.100.167/hxkr/#/dashboard
+[Recorder] Captured action: click - header > div:nth-of-type(2) > ul > li:nth-of-type(2) > span:nth-of-type(2)
+[Recorder] Captured action: navigate - http://192.168.100.167/hxkr/#/config/appCenter
+[Recorder] Captured action: click - div > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(8) > img

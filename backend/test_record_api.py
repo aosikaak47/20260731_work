@@ -1,0 +1,35 @@
+import urllib.request
+import json
+
+url = 'http://127.0.0.1:8000/api/v1/ui/record/browser/start'
+data = json.dumps({'url': 'https://www.baidu.com', 'headless': False}).encode()
+req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+
+try:
+    resp = urllib.request.urlopen(req, timeout=15)
+    result = json.loads(resp.read().decode())
+    print('Success:', result.get('success'))
+    print('Status:', result.get('status'))
+    print('Session ID:', result.get('session_id'))
+    print('Message:', result.get('message'))
+    
+    # 检查record_file
+    record_file = result.get('record_file')
+    if record_file:
+        import os
+        import time
+        time.sleep(2)
+        if os.path.exists(record_file):
+            with open(record_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            print('Record file status:', data.get('status'))
+            print('Actions count:', len(data.get('actions', [])))
+        else:
+            print('Record file does not exist yet')
+    
+except urllib.error.HTTPError as e:
+    print('HTTP Error:', e.code)
+    body = e.read().decode()
+    print('Error body:', body)
+except Exception as e:
+    print('Error:', str(e))

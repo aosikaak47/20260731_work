@@ -1,0 +1,53 @@
+[14108:16988:0731/101808.354:WARNING:t_skinfilemap.cpp(63)] SGRenderLog:CheckUpdate newMem.OpenMem Suc, szNewMem:Local\sgime_skin.v5.filemap.sogouime
+[14108:16988:0731/101808.354:WARNING:t_skinfilemap.cpp(65)] SGRenderLog:CheckUpdate finish: old version:1
+[14108:16988:0731/101808.354:WARNING:t_skinfilemap.cpp(67)] SGRenderLog:CheckUpdate finish: new version:5
+[0731/101809.348:ERROR:gpu\ipc\client\command_buffer_proxy_impl.cc:285] ContextResult::kTransientFailure: Failed to send GpuControl.CreateCommandBuffer.
+[0731/101812.589:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x173402eae400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/101812.773:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x173402eae400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/101813.104:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x173402eae400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/101813.253:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x173402eae400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+[5164:2748:0731/102312.591:WARNING:t_skinfilemap.cpp(63)] SGRenderLog:CheckUpdate newMem.OpenMem Suc, szNewMem:Local\sgime_skin.v5.filemap.sogouime
+[5164:2748:0731/102312.591:WARNING:t_skinfilemap.cpp(65)] SGRenderLog:CheckUpdate finish: old version:1
+[5164:2748:0731/102312.591:WARNING:t_skinfilemap.cpp(67)] SGRenderLog:CheckUpdate finish: new version:5
+[0731/102315.335:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x7b840019c200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[14004:15504:0731/102611.637:WARNING:t_skinfilemap.cpp(63)] SGRenderLog:CheckUpdate newMem.OpenMem Suc, szNewMem:Local\sgime_skin.v5.filemap.sogouime
+[14004:15504:0731/102612.253:WARNING:t_skinfilemap.cpp(65)] SGRenderLog:CheckUpdate finish: old version:1
+[14004:15504:0731/102612.253:WARNING:t_skinfilemap.cpp(67)] SGRenderLog:CheckUpdate finish: new version:5
+[0731/102621.284:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x5da400198200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/102621.846:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x5da400198200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[12988:18360:0731/103057.529:WARNING:t_skinfilemap.cpp(63)] SGRenderLog:CheckUpdate newMem.OpenMem Suc, szNewMem:Local\sgime_skin.v5.filemap.sogouime
+[12988:18360:0731/103057.529:WARNING:t_skinfilemap.cpp(65)] SGRenderLog:CheckUpdate finish: old version:1
+[12988:18360:0731/103057.529:WARNING:t_skinfilemap.cpp(67)] SGRenderLog:CheckUpdate finish: new version:5
+[0731/103107.219:WARNING:net\spdy\spdy_session.cc:3161] Received HEADERS for invalid stream 27
+[14908:1348:0731/104902.606:WARNING:t_skinfilemap.cpp(63)] SGRenderLog:CheckUpdate newMem.OpenMem Suc, szNewMem:Local\sgime_skin.v5.filemap.sogouime
+[14908:1348:0731/104902.606:WARNING:t_skinfilemap.cpp(65)] SGRenderLog:CheckUpdate finish: old version:1
+[14908:1348:0731/104902.606:WARNING:t_skinfilemap.cpp(67)] SGRenderLog:CheckUpdate finish: new version:5
+[13372:16952:0731/112303.792:WARNING:t_skinfilemap.cpp(63)] SGRenderLog:CheckUpdate newMem.OpenMem Suc, szNewMem:Local\sgime_skin.v5.filemap.sogouime
+[13372:16952:0731/112303.830:WARNING:t_skinfilemap.cpp(65)] SGRenderLog:CheckUpdate finish: old version:1
+[13372:16952:0731/112303.830:WARNING:t_skinfilemap.cpp(67)] SGRenderLog:CheckUpdate finish: new version:5
+[0731/112307.003:ERROR:gpu\ipc\client\command_buffer_proxy_impl.cc:285] ContextResult::kTransientFailure: Failed to send GpuControl.CreateCommandBuffer.
+[0731/112311.431:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x3d14030ec600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/112311.494:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x3d14030ec600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/112311.802:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x3d14030ec600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/112311.965:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x3d14030ec600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+[7976:9372:0731/112411.811:WARNING:t_skinfilemap.cpp(63)] SGRenderLog:CheckUpdate newMem.OpenMem Suc, szNewMem:Local\sgime_skin.v5.filemap.sogouime
+[7976:9372:0731/112411.811:WARNING:t_skinfilemap.cpp(65)] SGRenderLog:CheckUpdate finish: old version:1
+[7976:9372:0731/112411.811:WARNING:t_skinfilemap.cpp(67)] SGRenderLog:CheckUpdate finish: new version:5
+[0731/112413.923:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x440402d98000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/112413.992:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x440402d98000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/112414.276:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x440402d98000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/112414.418:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x440402d98000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+[14096:1928:0731/112808.816:WARNING:t_skinfilemap.cpp(63)] SGRenderLog:CheckUpdate newMem.OpenMem Suc, szNewMem:Local\sgime_skin.v5.filemap.sogouime
+[14096:1928:0731/112808.816:WARNING:t_skinfilemap.cpp(65)] SGRenderLog:CheckUpdate finish: old version:1
+[14096:1928:0731/112808.816:WARNING:t_skinfilemap.cpp(67)] SGRenderLog:CheckUpdate finish: new version:5
+[0731/112810.764:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x2ebc02dde400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/112810.836:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x2ebc02dde400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/112811.170:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x2ebc02dde400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/112811.347:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x2ebc02dde400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+[10412:5572:0731/124822.761:WARNING:t_skinfilemap.cpp(63)] SGRenderLog:CheckUpdate newMem.OpenMem Suc, szNewMem:Local\sgime_skin.v5.filemap.sogouime
+[10412:5572:0731/124822.781:WARNING:t_skinfilemap.cpp(65)] SGRenderLog:CheckUpdate finish: old version:1
+[10412:5572:0731/124822.781:WARNING:t_skinfilemap.cpp(67)] SGRenderLog:CheckUpdate finish: new version:5
+[0731/124826.812:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x59940264e400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/124826.956:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x59940264e400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/124827.307:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x59940264e400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[0731/124827.445:ERROR:gpu\command_buffer\service\gl_utils.cc:430] [.WebGL-0x59940264e400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)

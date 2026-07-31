@@ -1,0 +1,10 @@
+[Recorder] Starting browser, url=http://192.168.100.167/hxkr/#/config/appCenter
+[Recorder] Browser launched, navigating to http://192.168.100.167/hxkr/#/config/appCenter
+[Recorder] Page loaded, waiting for user actions...
+[Recorder] Captured action: navigate - http://192.168.100.167/hxkr/#/passport/login
+[Recorder] Captured action: click - #form_item_username
+[Recorder] Captured action: click - #form_item_username
+[Recorder] Captured action: click - #form_item_username
+[Recorder] Captured action: click - #form_item_password
+[Recorder] Captured action: click - #form_item_captcha
+[Recorder] Captured action: click - div > div > div > div > button

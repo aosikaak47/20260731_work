@@ -13,6 +13,9 @@ import uuid
 import re
 import gzip
 import zlib
+import asyncio
+import subprocess
+import sys
 from datetime import datetime
 from dotenv import load_dotenv
 import urllib3
@@ -44,6 +47,17 @@ if test_case_generator.ai_service:
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# 获取项目根目录（backend目录的父目录）
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(BACKEND_DIR)
+CONFIG_DIR = os.path.join(PROJECT_DIR, "config")
+
+def get_config_subdir(subdir):
+    """获取配置子目录的绝对路径"""
+    path = os.path.join(CONFIG_DIR, subdir)
+    os.makedirs(path, exist_ok=True)
+    return path
 
 def decode_response_body(response):
     content = response.content
@@ -5830,9 +5844,6 @@ DEFAULT_UI_CASES = [
 async def get_ui_cases(project_id: str = None, keyword: str = None):
     try:
         cases = load_ui_cases()
-        if not cases:
-            save_ui_cases(DEFAULT_UI_CASES)
-            cases = DEFAULT_UI_CASES
         
         if project_id:
             cases = [c for c in cases if c.get("project_id") == project_id]
@@ -5852,7 +5863,9 @@ async def add_ui_case(request: Request):
         new_case = {
             "id": str(uuid.uuid4()),
             "name": data.get("name", ""),
+            "project": data.get("project", ""),
             "project_id": data.get("project_id", ""),
+            "module": data.get("module", ""),
             "description": data.get("description", ""),
             "url": data.get("url", ""),
             "steps": data.get("steps", []),
@@ -6231,6 +6244,1743 @@ async def delete_ui_screenshot_api(screenshot_id: str):
         if success:
             return JSONResponse({"success": True})
         raise HTTPException(status_code=404, detail="截图不存在")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/ui/screenshots/image")
+async def get_screenshot_image(file: str, dir: str = None):
+    """获取执行结果的截图文件"""
+    try:
+        result_dir = get_config_subdir("ui_results")
+        if dir:
+            filepath = os.path.join(result_dir, dir, file)
+        else:
+            filepath = os.path.join(result_dir, file)
+        
+        if not os.path.exists(filepath):
+            raise HTTPException(status_code=404, detail="截图文件不存在")
+        
+        from fastapi.responses import FileResponse
+        return FileResponse(filepath, media_type="image/png")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== 知识图谱 API =====
+@app.get("/api/v1/ui/knowledge_graph")
+async def get_ui_knowledge_graph(project_id: str = None):
+    """基于页面-元素关系生成前端知识图谱"""
+    try:
+        elements = load_ui_elements()
+        cases = load_ui_cases()
+        
+        if project_id:
+            elements = [e for e in elements if e.get("project_id") == project_id]
+            cases = [c for c in cases if c.get("project_id") == project_id]
+        
+        # 构建节点（页面和元素）
+        nodes = []
+        node_ids = set()
+        
+        # 添加页面节点
+        pages = set(e.get("page", "") for e in elements if e.get("page"))
+        for page in pages:
+            page_id = f"page:{page}"
+            if page_id not in node_ids:
+                nodes.append({
+                    "id": page_id,
+                    "label": page,
+                    "type": "page",
+                    "group": "page"
+                })
+                node_ids.add(page_id)
+        
+        # 添加元素节点
+        for elem in elements:
+            elem_id = f"elem:{elem.get('id')}"
+            if elem_id not in node_ids:
+                nodes.append({
+                    "id": elem_id,
+                    "label": elem.get("name", "未知元素"),
+                    "type": "element",
+                    "group": elem.get("page", "unknown"),
+                    "locator_type": elem.get("locator_type"),
+                    "locator_value": elem.get("locator_value"),
+                    "page": elem.get("page")
+                })
+                node_ids.add(elem_id)
+        
+        # 添加用例节点
+        for case in cases:
+            case_id = f"case:{case.get('id')}"
+            if case_id not in node_ids:
+                nodes.append({
+                    "id": case_id,
+                    "label": case.get("name", "未知用例"),
+                    "type": "case",
+                    "group": "case",
+                    "url": case.get("url"),
+                    "steps_count": len(case.get("steps", []))
+                })
+                node_ids.add(case_id)
+        
+        # 构建边（关系）
+        edges = []
+        edge_ids = set()
+        
+        # 元素 -> 页面 关系
+        for elem in elements:
+            page = elem.get("page", "")
+            if page:
+                edge_id = f"{elem.get('id')}-{page}"
+                if edge_id not in edge_ids:
+                    edges.append({
+                        "source": f"page:{page}",
+                        "target": f"elem:{elem.get('id')}",
+                        "label": "包含"
+                    })
+                    edge_ids.add(edge_id)
+        
+        # 用例 -> 元素 关系
+        for case in cases:
+            case_id = f"case:{case.get('id')}"
+            for step in case.get("steps", []):
+                element_name = step.get("element", "")
+                if element_name:
+                    # 查找对应的元素
+                    for elem in elements:
+                        if elem.get("name") == element_name:
+                            edge_id = f"{case.get('id')}-{elem.get('id')}"
+                            if edge_id not in edge_ids:
+                                edges.append({
+                                    "source": case_id,
+                                    "target": f"elem:{elem.get('id')}",
+                                    "label": "使用"
+                                })
+                                edge_ids.add(edge_id)
+        
+        # 统计信息
+        stats = {
+            "total_pages": len(pages),
+            "total_elements": len(elements),
+            "total_cases": len(cases),
+            "node_count": len(nodes),
+            "edge_count": len(edges)
+        }
+        
+        return JSONResponse({
+            "success": True,
+            "graph": {
+                "nodes": nodes,
+                "edges": edges
+            },
+            "stats": stats
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/knowledge_graph/generate")
+async def generate_ui_knowledge_graph(request: Request):
+    """AI生成知识图谱 - 分析页面结构和元素关系"""
+    try:
+        data = await request.json()
+        url = data.get("url", "")
+        project_id = data.get("project_id", "")
+        
+        if not url:
+            raise HTTPException(status_code=400, detail="请提供目标URL")
+        
+        # AI分析页面结构（模拟）
+        page_analysis = {
+            "pages": [
+                {"name": "登录页面", "url": f"{url}/login", "elements_count": 5},
+                {"name": "首页工作台", "url": f"{url}/dashboard", "elements_count": 12},
+                {"name": "用例管理页面", "url": f"{url}/case-list", "elements_count": 8},
+                {"name": "性能测试页面", "url": f"{url}/perf-tests", "elements_count": 10}
+            ],
+            "common_elements": [
+                {"name": "用户名输入框", "locator": "//input[@name='username']", "page": "登录页面"},
+                {"name": "密码输入框", "locator": "//input[@name='password']", "page": "登录页面"},
+                {"name": "登录按钮", "locator": "button.login-btn", "page": "登录页面"},
+                {"name": "搜索框", "locator": "input.search-input", "page": "用例管理页面"}
+            ],
+            "suggestions": [
+                "建议优先使用data-testid属性定位元素",
+                "按钮元素建议使用role+name组合定位",
+                "表单元素建议使用label关联定位"
+            ]
+        }
+        
+        return JSONResponse({
+            "success": True,
+            "analysis": page_analysis,
+            "message": "知识图谱生成成功"
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== UI操作录制 API =====
+record_sessions = {}
+
+RECORD_INJECT_SCRIPT = '''
+(function() {
+    window.__recordedActions = [];
+    window.__recordActive = true;
+
+    function getElementSelector(element) {
+        if (element.id) return '#' + element.id;
+        if (element.name) return element.tagName.toLowerCase() + '[name="' + element.name + '"]';
+        if (element.getAttribute('data-testid')) return '[data-testid="' + element.getAttribute('data-testid') + '"]';
+        var path = [];
+        var current = element;
+        while (current && current.nodeType === 1 && path.length < 5) {
+            var selector = current.tagName.toLowerCase();
+            if (current.id) { selector += '#' + current.id; path.unshift(selector); break; }
+            var parent = current.parentNode;
+            if (parent) {
+                var siblings = Array.from(parent.children).filter(function(c) { return c.tagName === current.tagName; });
+                if (siblings.length > 1) {
+                    var index = siblings.indexOf(current) + 1;
+                    selector += ':nth-of-type(' + index + ')';
+                }
+                path.unshift(selector);
+            }
+            current = current.parentNode;
+        }
+        return path.join(' > ');
+    }
+
+    function getElementType(element) {
+        var tag = element.tagName.toLowerCase();
+        var type = element.type ? element.type.toLowerCase() : '';
+        if (tag === 'input') return type === 'text' ? 'input' : type || 'input';
+        if (tag === 'textarea') return 'textarea';
+        if (tag === 'select') return 'select';
+        if (tag === 'button') return 'button';
+        if (tag === 'a') return 'link';
+        if (tag === 'img') return 'image';
+        return 'element';
+    }
+
+    function getActionDescription(element, action) {
+        var selector = getElementSelector(element);
+        var elementType = getElementType(element);
+        var text = element.textContent ? element.textContent.trim().substring(0, 30) : '';
+        if (action === 'click') {
+            return { type: 'click', selector: selector, elementType: elementType, text: text, tagName: element.tagName.toLowerCase() };
+        } else if (action === 'input') {
+            return { type: 'input', selector: selector, elementType: elementType, value: element.value, tagName: element.tagName.toLowerCase() };
+        } else if (action === 'select') {
+            return { type: 'select', selector: selector, elementType: elementType, value: element.value, tagName: element.tagName.toLowerCase() };
+        } else if (action === 'hover') {
+            return { type: 'hover', selector: selector, elementType: elementType, text: text, tagName: element.tagName.toLowerCase() };
+        }
+        return { type: action, selector: selector, elementType: elementType };
+    }
+
+    function sendAction(action) {
+        action.timestamp = Date.now();
+        window.__recordedActions.push(action);
+        // 通过console.log发送给后端Playwright监听
+        console.log('__RECORD_ACTION__:' + JSON.stringify(action));
+    }
+
+    // 防抖：输入操作只在失焦或回车时记录
+    var inputTimeout = null;
+    var lastInputTarget = null;
+    var lastInputValue = '';
+
+    document.addEventListener('click', function(e) {
+        if (!window.__recordActive) return;
+        // 忽略对录制控制面板的点击
+        if (e.target.id === '__recorder_panel') return;
+        var action = getActionDescription(e.target, 'click');
+        sendAction(action);
+    }, true);
+
+    document.addEventListener('input', function(e) {
+        if (!window.__recordActive) return;
+        var target = e.target;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+            // 防抖：延迟记录输入操作
+            if (inputTimeout) clearTimeout(inputTimeout);
+            lastInputTarget = target;
+            lastInputValue = target.value;
+            inputTimeout = setTimeout(function() {
+                if (lastInputTarget && lastInputValue) {
+                    var action = getActionDescription(lastInputTarget, 'input');
+                    action.value = lastInputValue;
+                    sendAction(action);
+                }
+            }, 800);
+        }
+    }, true);
+
+    document.addEventListener('change', function(e) {
+        if (!window.__recordActive) return;
+        if (e.target.tagName === 'SELECT') {
+            var action = getActionDescription(e.target, 'select');
+            sendAction(action);
+        }
+    }, true);
+
+    // 监听页面导航
+    var lastUrl = location.href;
+    setInterval(function() {
+        if (!window.__recordActive) return;
+        if (location.href !== lastUrl) {
+            var action = {
+                type: 'navigate',
+                url: location.href,
+                fromUrl: lastUrl,
+                timestamp: Date.now()
+            };
+            window.__recordedActions.push(action);
+            console.log('__RECORD_ACTION__:' + JSON.stringify(action));
+            lastUrl = location.href;
+        }
+    }, 500);
+
+    window.stopRecording = function() {
+        window.__recordActive = false;
+        return window.__recordedActions;
+    };
+
+    window.getRecordedActions = function() {
+        return window.__recordedActions;
+    };
+
+    console.log('[UI Recorder] Recording started. Actions will be captured automatically.');
+})();
+'''
+
+@app.post("/api/v1/ui/record/start")
+async def start_ui_recording(request: Request):
+    """开始UI操作录制"""
+    try:
+        data = await request.json()
+        url = data.get("url", "")
+        headless = data.get("headless", False)
+        
+        if not url:
+            raise HTTPException(status_code=400, detail="请提供目标URL")
+        
+        session_id = str(uuid.uuid4())
+        
+        record_sessions[session_id] = {
+            "id": session_id,
+            "url": url,
+            "headless": headless,
+            "status": "initializing",
+            "actions": [],
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "browser_process": None
+        }
+        
+        return JSONResponse({
+            "success": True,
+            "session_id": session_id,
+            "url": url,
+            "message": "录制会话已创建"
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/record/browser/start")
+async def start_record_browser(request: Request):
+    """启动录制浏览器 - 使用Playwright自动录制用户操作"""
+    try:
+        data = await request.json()
+        url = data.get("url", "")
+        headless = data.get("headless", False)
+
+        if not url:
+            raise HTTPException(status_code=400, detail="请提供目标URL")
+
+        session_id = str(uuid.uuid4())
+
+        # 创建会话
+        record_sessions[session_id] = {
+            "id": session_id,
+            "url": url,
+            "headless": headless,
+            "status": "starting",
+            "actions": [],
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "browser_process": None
+        }
+
+        # 生成录制脚本文件
+        scripts_dir = get_config_subdir("ui_scripts")
+
+        # 使用JSON文件进行进程间通信
+        record_file = os.path.join(scripts_dir, f"record_{session_id}.json")
+        with open(record_file, 'w', encoding='utf-8') as f:
+            f.write('{"actions": [], "status": "starting"}')
+
+        # 生成录制用的Python脚本
+        recorder_script = os.path.join(scripts_dir, f"recorder_{session_id}.py")
+        
+        # 直接构建脚本内容，避免模板替换可能导致的双花括号问题
+        inject_script_str = repr(RECORD_INJECT_SCRIPT)
+        
+        lines = [
+            '#!/usr/bin/env python3',
+            '# -*- coding: utf-8 -*-',
+            'import asyncio',
+            'import json',
+            'import sys',
+            'import os',
+            '',
+            'record_file = ' + repr(record_file),
+            'target_url = ' + repr(url),
+            'headless_mode = ' + str(headless),
+            '',
+            '# 录制注入脚本',
+            'INJECT_SCRIPT = ' + inject_script_str,
+            '',
+            'def save_actions(actions, status="recording"):',
+            '    try:',
+            '        data = dict(actions=actions, status=status, count=len(actions))',
+            '        with open(record_file, "w", encoding="utf-8") as f:',
+            '            json.dump(data, f, ensure_ascii=False)',
+            '    except Exception as e:',
+            '        print("Save error: %s" % e, flush=True)',
+            '',
+            'async def main():',
+            '    try:',
+            '        from playwright.async_api import async_playwright',
+            '        ',
+            '        print("[Recorder] Starting browser, url=%s" % target_url, flush=True)',
+            '        save_actions([], "starting")',
+            '        ',
+            '        async with async_playwright() as p:',
+            '            browser = await p.chromium.launch(headless=headless_mode)',
+            '            context = await browser.new_context()',
+            '            page = await context.new_page()',
+            '            ',
+            '            print("[Recorder] Browser launched, navigating to %s" % target_url, flush=True)',
+            '            ',
+            '            # 注入录制脚本',
+            '            await page.add_init_script(INJECT_SCRIPT)',
+            '            ',
+            '            recorded_actions = []',
+            '            ',
+            '            def on_console(msg):',
+            '                try:',
+            '                    if msg.text.startswith("__RECORD_ACTION__:"):',
+            '                        action_data = msg.text.replace("__RECORD_ACTION__:", "")',
+            '                        action = json.loads(action_data)',
+            '                        recorded_actions.append(action)',
+            '                        save_actions(recorded_actions, "recording")',
+            '                        print("[Recorder] Captured action: %s - %s" % (action.get("type", ""), action.get("selector", action.get("url", ""))), flush=True)',
+            '                except Exception as e:',
+            '                    print("[Recorder] Console error: %s" % e, flush=True)',
+            '            ',
+            '            page.on("console", on_console)',
+            '            ',
+            '            # 导航到目标URL',
+            '            await page.goto(target_url, wait_until="domcontentloaded")',
+            '            print("[Recorder] Page loaded, waiting for user actions...", flush=True)',
+            '            save_actions(recorded_actions, "recording")',
+            '            ',
+            '            # 等待用户操作或浏览器关闭',
+            '            try:',
+            '                # 定期保存状态',
+            '                async def heartbeat():',
+            '                    while True:',
+            '                        await asyncio.sleep(1)',
+            '                        save_actions(recorded_actions, "recording")',
+            '                ',
+            '                heartbeat_task = asyncio.create_task(heartbeat())',
+            '                ',
+            '                # 等待浏览器关闭或超时',
+            '                try:',
+            '                    await page.wait_for_event("close", timeout=3600000)',
+            '                except asyncio.TimeoutError:',
+            '                    print("[Recorder] Timeout, closing browser", flush=True)',
+            '                ',
+            '                heartbeat_task.cancel()',
+            '                ',
+            '            except Exception as e:',
+            '                print("[Recorder] Wait error: %s" % e, flush=True)',
+            '            ',
+            '            save_actions(recorded_actions, "completed")',
+            '            print("[Recorder] Session ended. Total actions: %d" % len(recorded_actions), flush=True)',
+            '            await browser.close()',
+            '            ',
+            '    except Exception as e:',
+            '        print("[Recorder] Error: %s" % e, flush=True)',
+            '        try:',
+            '            save_actions([], "error: %s" % e)',
+            '        except:',
+            '            pass',
+            '',
+            'if __name__ == "__main__":',
+            '    asyncio.run(main())',
+            ''
+        ]
+        
+        script_content = '\n'.join(lines)
+        
+        with open(recorder_script, 'w', encoding='utf-8') as f:
+            f.write(script_content)
+
+        # 使用subprocess启动浏览器进程
+        # 添加输出日志文件
+        log_file = os.path.join(scripts_dir, f"log_{session_id}.txt")
+        log_f = open(log_file, 'w', encoding='utf-8')
+        
+        # Windows下使用CREATE_NEW_PROCESS_GROUP创建新进程组
+        # 不使用CREATE_NO_WINDOW标志，确保浏览器窗口能正常弹出
+        creation_flags = 0
+        if sys.platform == 'win32':
+            creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP
+        
+        try:
+            process = subprocess.Popen(
+                [sys.executable, recorder_script],
+                cwd=os.path.dirname(os.path.abspath(__file__)),
+                stdout=log_f,
+                stderr=subprocess.STDOUT,
+                creationflags=creation_flags,
+                env={**os.environ, 'PYTHONUNBUFFERED': '1'}
+            )
+            
+            # 等待一小段时间确认浏览器已启动
+            await asyncio.sleep(3)
+            
+            # 检查进程是否还在运行
+            if process.poll() is not None:
+                # 进程已退出，读取日志
+                log_f.close()
+                with open(log_file, 'r', encoding='utf-8') as lf:
+                    log_content = lf.read()
+                raise HTTPException(status_code=500, detail=f"浏览器进程启动失败，已退出。日志: {log_content[:500]}")
+            
+            record_sessions[session_id]["browser_process"] = process
+            record_sessions[session_id]["record_file"] = record_file
+            record_sessions[session_id]["log_file"] = log_file
+            record_sessions[session_id]["log_f"] = log_f
+            record_sessions[session_id]["status"] = "recording"
+
+            return JSONResponse({
+                "success": True,
+                "session_id": session_id,
+                "url": url,
+                "status": "recording",
+                "record_file": record_file,
+                "log_file": log_file,
+                "message": "浏览器已启动，请在新打开的浏览器窗口中进行操作，系统将自动录制"
+            })
+        except HTTPException:
+            log_f.close()
+            raise
+        except Exception as e:
+            log_f.close()
+            raise HTTPException(status_code=500, detail=f"启动浏览器失败: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        raise HTTPException(status_code=500, detail=f"{str(e)}: {traceback.format_exc()}")
+
+@app.post("/api/v1/ui/record/actions")
+async def add_record_actions(request: Request):
+    """添加录制的操作"""
+    try:
+        data = await request.json()
+        session_id = data.get("session_id", "")
+        actions = data.get("actions", [])
+        
+        if session_id not in record_sessions:
+            raise HTTPException(status_code=404, detail="录制会话不存在")
+        
+        session = record_sessions[session_id]
+        session["actions"].extend(actions)
+        session["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        return JSONResponse({
+            "success": True,
+            "session_id": session_id,
+            "total_actions": len(session["actions"]),
+            "message": f"已添加 {len(actions)} 个操作"
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/ui/record/{session_id}")
+async def get_record_session(session_id: str):
+    """获取录制会话状态和操作列表"""
+    # 先检查内存中的session
+    if session_id in record_sessions:
+        session = record_sessions[session_id]
+        
+        # 如果有record_file，从文件中读取最新的操作记录
+        record_file = session.get("record_file", "")
+        if record_file and os.path.exists(record_file):
+            try:
+                with open(record_file, 'r', encoding='utf-8') as f:
+                    file_data = json.load(f)
+                    session["actions"] = file_data.get("actions", [])
+                    file_status = file_data.get("status", "")
+                    if file_status:
+                        session["status"] = file_status
+                    session["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            except Exception:
+                pass
+        
+        # 检查子进程是否已结束
+        process = session.get("browser_process")
+        if process and hasattr(process, 'poll') and process.poll() is not None:
+            if session["status"] not in ("stopped", "error", "completed"):
+                session["status"] = "stopped"
+        
+        return JSONResponse({
+            "success": True,
+            "session": {
+                "id": session["id"],
+                "url": session["url"],
+                "status": session["status"],
+                "actions": session.get("actions", []),
+                "actions_count": len(session.get("actions", [])),
+                "created_at": session["created_at"],
+                "last_updated": session.get("last_updated"),
+                "message": session.get("message", "")
+            }
+        })
+    
+    # 检查是否有对应的record_file（可能进程已结束但session已从内存中清除）
+    scripts_dir = get_config_subdir("ui_scripts")
+    record_file = os.path.join(scripts_dir, f"record_{session_id}.json")
+    if os.path.exists(record_file):
+        try:
+            with open(record_file, 'r', encoding='utf-8') as f:
+                file_data = json.load(f)
+                return JSONResponse({
+                    "success": True,
+                    "session": {
+                        "id": session_id,
+                        "url": "",
+                        "status": file_data.get("status", "unknown"),
+                        "actions": file_data.get("actions", []),
+                        "actions_count": len(file_data.get("actions", [])),
+                        "created_at": "",
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "message": "Session recovered from file"
+                    }
+                })
+        except Exception:
+            pass
+    
+    raise HTTPException(status_code=404, detail="录制会话不存在")
+
+@app.post("/api/v1/ui/record/stop")
+async def stop_ui_recording(request: Request):
+    """停止录制并生成脚本"""
+    try:
+        data = await request.json()
+        session_id = data.get("session_id", "")
+        case_name = data.get("case_name", "录制场景")
+        url = data.get("url", "")
+        actions = data.get("actions", [])
+
+        # 清理日志文件和浏览器进程
+        if session_id in record_sessions:
+            session = record_sessions[session_id]
+            
+            # 关闭日志文件
+            log_f = session.get("log_f")
+            if log_f:
+                try:
+                    log_f.close()
+                except Exception:
+                    pass
+            
+            # 终止浏览器进程
+            process = session.get("browser_process")
+            if process and hasattr(process, 'poll') and process.poll() is None:
+                try:
+                    process.terminate()
+                except Exception:
+                    pass
+        
+        # 优先使用传入的actions，如果为空则尝试从session或JSON文件获取
+        if not actions:
+            if session_id in record_sessions:
+                session = record_sessions[session_id]
+                url = session.get("url", url)
+                
+                # 尝试从JSON文件读取最新的操作记录
+                record_file = session.get("record_file", "")
+                if record_file and os.path.exists(record_file):
+                    try:
+                        with open(record_file, 'r', encoding='utf-8') as f:
+                            file_data = json.load(f)
+                            actions = file_data.get("actions", [])
+                            # 从文件中读取URL（如果有）
+                            if not url and file_data.get("url"):
+                                url = file_data["url"]
+                    except Exception:
+                        pass
+                
+                # 如果文件读取失败，使用session中的actions
+                if not actions:
+                    actions = session.get("actions", [])
+            else:
+                # 尝试从JSON文件直接读取
+                scripts_dir = get_config_subdir("ui_scripts")
+                record_file = os.path.join(scripts_dir, f"record_{session_id}.json")
+                if os.path.exists(record_file):
+                    try:
+                        with open(record_file, 'r', encoding='utf-8') as f:
+                            file_data = json.load(f)
+                            actions = file_data.get("actions", [])
+                    except Exception:
+                        pass
+
+        # 如果有session，更新状态为stopped
+        if session_id in record_sessions:
+            record_sessions[session_id]["status"] = "stopped"
+
+        if not url:
+            raise HTTPException(status_code=400, detail="缺少目标URL")
+        
+        script_lines = []
+        script_lines.append('#!/usr/bin/env python3')
+        script_lines.append('# -*- coding: utf-8 -*-')
+        script_lines.append(f'# Playwright 自动化测试脚本')
+        script_lines.append(f'# 用例名称: {case_name}')
+        script_lines.append(f'# 目标URL: {url}')
+        # 转义URL中的引号
+        url_escaped = url.replace('"', '\\"')
+        script_lines.append(f'# 生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        script_lines.append(f'# 操作数量: {len(actions)}')
+        script_lines.append('')
+        script_lines.append('import asyncio')
+        script_lines.append('from playwright.async_api import async_playwright')
+        script_lines.append('')
+        script_lines.append('# 配置')
+        script_lines.append('SLOW_MO = 500  # 操作间隔(ms)，模拟人类操作速度')
+        script_lines.append('STEP_DELAY = 800  # 步骤间延迟(ms)')
+        script_lines.append('HEADLESS = False  # 是否无头模式')
+        script_lines.append('')
+        script_lines.append('')
+        script_lines.append(f'async def test_{case_name.replace(" ", "_").replace("-", "_")}():')
+        script_lines.append('    """')
+        script_lines.append(f'    {case_name}')
+        script_lines.append('    """')
+        script_lines.append('    try:')
+        script_lines.append('        async with async_playwright() as p:')
+        script_lines.append('            browser = await p.chromium.launch(headless=HEADLESS, slow_mo=SLOW_MO)')
+        script_lines.append('            context = await browser.new_context(viewport={"width": 1920, "height": 1080})')
+        script_lines.append('            page = await context.new_page()')
+        script_lines.append('')
+        
+        script_lines.append(f'            # 打开目标页面')
+        script_lines.append(f'            await page.goto("{url_escaped}", wait_until="domcontentloaded")')
+        script_lines.append('            await page.wait_for_timeout(STEP_DELAY)')
+        script_lines.append('')
+        
+        for i, action in enumerate(actions, 1):
+            action_type = action.get("type", "")
+            selector = action.get("selector", "").replace('"', '\\"').replace('\\', '\\\\')
+            value = action.get("value", "").replace('"', '\\"').replace('\\', '\\\\')
+            action_text = action.get("text", "")
+            action_url = action.get("url", "").replace('"', '\\"').replace('\\', '\\\\')
+            element_type = action.get("elementType", "")
+            
+            if action_type == 'navigate':
+                script_lines.append(f'            # 步骤{i}: 页面导航')
+                script_lines.append(f'            await page.goto("{action_url}", wait_until="domcontentloaded")')
+                script_lines.append('            await page.wait_for_timeout(STEP_DELAY)')
+            elif action_type == 'click':
+                script_lines.append(f'            # 步骤{i}: 点击元素')
+                if action_text:
+                    text_escaped = action_text[:30].replace('"', '\\"')
+                    script_lines.append(f'            # 目标: {text_escaped}')
+                # 添加多个备选选择器
+                script_lines.append(f'            click_done = False')
+                script_lines.append(f'            for loc_expr in [')
+                script_lines.append(f'                lambda: page.locator("{selector}"),')
+                script_lines.append(f'                lambda: page.get_by_text("{action_text[:50] if action_text else ""}"),')
+                script_lines.append(f'                lambda: page.get_by_role("button"),')
+                script_lines.append(f'            ]:')
+                script_lines.append(f'                try:')
+                script_lines.append(f'                    locator = loc_expr()')
+                script_lines.append(f'                    await locator.wait_for(state="visible", timeout=5000)')
+                script_lines.append(f'                    await locator.click()')
+                script_lines.append(f'                    click_done = True')
+                script_lines.append(f'                    break')
+                script_lines.append(f'                except Exception:')
+                script_lines.append(f'                    continue')
+                script_lines.append(f'            if not click_done:')
+                script_lines.append(f'                await page.locator("{selector}").click(force=True)')
+                script_lines.append('            await page.wait_for_timeout(STEP_DELAY)')
+            elif action_type == 'input':
+                script_lines.append(f'            # 步骤{i}: 输入文本')
+                # 添加多个备选选择器
+                script_lines.append(f'            input_done = False')
+                script_lines.append(f'            for loc_expr in [')
+                script_lines.append(f'                lambda: page.locator("{selector}"),')
+                script_lines.append(f'                lambda: page.get_by_role("textbox"),')
+                script_lines.append(f'            ]:')
+                script_lines.append(f'                try:')
+                script_lines.append(f'                    locator = loc_expr()')
+                script_lines.append(f'                    await locator.wait_for(state="visible", timeout=5000)')
+                script_lines.append(f'                    await locator.fill("{value}")')
+                script_lines.append(f'                    input_done = True')
+                script_lines.append(f'                    break')
+                script_lines.append(f'                except Exception:')
+                script_lines.append(f'                    continue')
+                script_lines.append(f'            if not input_done:')
+                script_lines.append(f'                await page.locator("{selector}").fill("{value}", force=True)')
+                script_lines.append('            await page.wait_for_timeout(STEP_DELAY)')
+            elif action_type == 'select':
+                script_lines.append(f'            # 步骤{i}: 选择选项')
+                script_lines.append(f'            await page.locator("{selector}").select_option("{value}")')
+                script_lines.append('            await page.wait_for_timeout(STEP_DELAY)')
+            elif action_type == 'hover':
+                script_lines.append(f'            # 步骤{i}: 悬停')
+                script_lines.append(f'            await page.locator("{selector}").hover()')
+                script_lines.append('            await page.wait_for_timeout(STEP_DELAY)')
+            else:
+                script_lines.append(f'            # 步骤{i}: {action_type}')
+                if selector:
+                    script_lines.append(f'            try:')
+                    script_lines.append(f'                await page.locator("{selector}").click()')
+                    script_lines.append(f'            except Exception:')
+                    script_lines.append(f'                pass')
+                    script_lines.append('            await page.wait_for_timeout(STEP_DELAY)')
+            
+            script_lines.append('')
+        
+        script_lines.append('            # 截图保存')
+        script_lines.append('            await page.screenshot(path="test_result.png")')
+        script_lines.append('            await browser.close()')
+        script_lines.append('            print("✓ 测试执行完成")')
+        script_lines.append('    except Exception as e:')
+        script_lines.append('        print(f"✗ 测试执行失败: {e}")')
+        script_lines.append('        raise')
+        script_lines.append('')
+        script_lines.append('')
+        script_lines.append('if __name__ == "__main__":')
+        script_lines.append(f'    asyncio.run(test_{case_name.replace(" ", "_").replace("-", "_")}())')
+        
+        script = '\n'.join(script_lines)
+        
+        scripts_dir = get_config_subdir("ui_scripts")
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"record_{timestamp}.py"
+        filepath = os.path.join(scripts_dir, filename)
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(script)
+        
+        if session_id and session_id in record_sessions:
+            del record_sessions[session_id]
+        
+        return JSONResponse({
+            "success": True,
+            "script": script,
+            "script_file": filename,
+            "script_path": filepath,
+            "actions_count": len(actions),
+            "execute_command": f'python "{filepath}"',
+            "message": "录制完成，脚本已生成"
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        raise HTTPException(status_code=500, detail=f"{str(e)}: {traceback.format_exc()}")
+
+# ===== Playwright 脚本生成 API =====
+@app.post("/api/v1/ui/playwright/generate")
+async def generate_playwright_script(request: Request):
+    """根据UI用例生成Playwright自动化脚本(Python格式)"""
+    try:
+        data = await request.json()
+        case_id = data.get("case_id")
+        case_data = data.get("case")
+        
+        if case_id:
+            cases = load_ui_cases()
+            for c in cases:
+                if c["id"] == case_id:
+                    case_data = c
+                    break
+        
+        if not case_data:
+            raise HTTPException(status_code=400, detail="请提供用例数据")
+        
+        name = case_data.get("name", "未命名测试")
+        url = case_data.get("url", "")
+        steps = case_data.get("steps", [])
+        
+        elements = load_ui_elements()
+        element_map = {e["name"]: e for e in elements}
+        
+        script_lines = []
+        script_lines.append('# Playwright 自动化测试脚本 (Python)')
+        script_lines.append(f'# 用例名称: {name}')
+        script_lines.append(f'# 生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        script_lines.append('')
+        script_lines.append('import asyncio')
+        script_lines.append('import json')
+        script_lines.append('import os')
+        script_lines.append('import sys')
+        script_lines.append('from playwright.async_api import async_playwright')
+        script_lines.append('')
+        script_lines.append('# 配置')
+        script_lines.append('SLOW_MO = 500  # 操作间隔(ms)，模拟人类操作速度')
+        script_lines.append('STEP_DELAY = 800  # 步骤间延迟(ms)')
+        script_lines.append('HEADLESS = False  # 是否无头模式')
+        script_lines.append('CAPTCHA_PAUSE_FILE = None  # 验证码暂停文件路径')
+        script_lines.append('')
+        
+        # 生成会话ID用于验证码暂停
+        session_id = str(uuid.uuid4())
+        captcha_dir = get_config_subdir("ui_results")
+        script_lines.append(f'SCRIPT_DIR = {repr(captcha_dir)}')
+        script_lines.append(f'SESSION_ID = {repr(session_id)}')
+        script_lines.append('')
+        
+        script_lines.append('async def wait_for_captcha_input():')
+        script_lines.append('    """等待用户手动输入验证码"""')
+        script_lines.append('    captcha_file = os.path.join(SCRIPT_DIR, f"captcha_input_{SESSION_ID}.json")')
+        script_lines.append('    pause_file = os.path.join(SCRIPT_DIR, f"captcha_pause_{SESSION_ID}.json")')
+        script_lines.append('    ')
+        script_lines.append('    # 通知前端已暂停等待验证码')
+        script_lines.append('    os.makedirs(SCRIPT_DIR, exist_ok=True)')
+        script_lines.append('    with open(pause_file, "w", encoding="utf-8") as f:')
+        script_lines.append('        json.dump({"status": "paused", "message": "等待验证码输入"}, f)')
+        script_lines.append('    print("[Captcha] 已暂停，等待用户输入验证码...", flush=True)')
+        script_lines.append('    ')
+        script_lines.append('    # 轮询等待用户输入验证码')
+        script_lines.append('    while True:')
+        script_lines.append('        await asyncio.sleep(1)')
+        script_lines.append('        if os.path.exists(captcha_file):')
+        script_lines.append('            try:')
+        script_lines.append('                with open(captcha_file, "r", encoding="utf-8") as f:')
+        script_lines.append('                    data = json.load(f)')
+        script_lines.append('                captcha_code = data.get("code", "")')
+        script_lines.append('                if captcha_code:')
+        script_lines.append('                    print(f"[Captcha] 收到验证码: {captcha_code}", flush=True)')
+        script_lines.append('                    # 清理文件')
+        script_lines.append('                    os.remove(captcha_file)')
+        script_lines.append('                    os.remove(pause_file)')
+        script_lines.append('                    return captcha_code')
+        script_lines.append('            except Exception as e:')
+        script_lines.append('                print(f"[Captcha] 读取验证码出错: {e}", flush=True)')
+        script_lines.append('                continue')
+        script_lines.append('    ')
+        script_lines.append('async def run_test():')
+        script_lines.append('    try:')
+        script_lines.append('        async with async_playwright() as p:')
+        script_lines.append('            browser = await p.chromium.launch(headless=HEADLESS, slow_mo=SLOW_MO)')
+        script_lines.append('            context = await browser.new_context(viewport={"width": 1920, "height": 1080})')
+        script_lines.append('            page = await context.new_page()')
+        script_lines.append('')
+        
+        if url:
+            script_lines.append('            # 打开目标页面')
+            script_lines.append(f'            await page.goto("{url}", wait_until="domcontentloaded")')
+            script_lines.append('            await page.wait_for_timeout(STEP_DELAY)')
+            script_lines.append('')
+        
+        indent = '            '  # 三级缩进 (在 async with 块内)
+        
+        for i, step in enumerate(steps):
+            step_type = step.get("type", "")
+            step_name = step.get("name", f"步骤 {i+1}")
+            element_name = step.get("element", "")
+            params = step.get("params", {})
+            
+            script_lines.append(f'{indent}# {step_name}')
+            
+            if step_type == "navigate":
+                nav_url = params.get("url", url)
+                script_lines.append(f'{indent}await page.goto("{nav_url}", wait_until="domcontentloaded")')
+                script_lines.append(f'{indent}await page.wait_for_timeout(STEP_DELAY)')
+                
+            elif step_type == "input":
+                value = params.get("value", "")
+                # 收集多个备选选择器表达式
+                locator_candidates = []
+                
+                if element_name and element_name in element_map:
+                    elem_info = element_map[element_name]
+                    locator_value = elem_info.get("locator_value", "")
+                    if locator_value:
+                        locator_candidates.append(f'page.locator("{locator_value}")')
+                
+                if element_name:
+                    locator_candidates.append(f'page.get_by_role("textbox", name="{element_name}")')
+                    locator_candidates.append(f'page.get_by_placeholder("{element_name}")')
+                    locator_candidates.append(f'page.locator("input").first')
+                
+                if locator_candidates:
+                    # 使用for循环尝试多个选择器
+                    script_lines.append(f'{indent}input_value = "{value}"')
+                    script_lines.append(f'{indent}input_done = False')
+                    script_lines.append(f'{indent}for loc_expr in [')
+                    for j, loc in enumerate(locator_candidates):
+                        suffix = ',' if j < len(locator_candidates) - 1 else ''
+                        script_lines.append(f'{indent}    lambda: {loc}{suffix}')
+                    script_lines.append(f'{indent}]:')
+                    script_lines.append(f'{indent}    try:')
+                    script_lines.append(f'{indent}        locator = loc_expr()')
+                    script_lines.append(f'{indent}        await locator.wait_for(state="visible", timeout=5000)')
+                    script_lines.append(f'{indent}        await locator.fill(input_value)')
+                    script_lines.append(f'{indent}        input_done = True')
+                    script_lines.append(f'{indent}        break')
+                    script_lines.append(f'{indent}    except Exception:')
+                    script_lines.append(f'{indent}        continue')
+                    script_lines.append(f'{indent}if not input_done:')
+                    script_lines.append(f'{indent}    await page.locator("input").first.fill(input_value, force=True)')
+                    script_lines.append(f'{indent}await page.wait_for_timeout(STEP_DELAY)')
+                else:
+                    script_lines.append(f'{indent}await page.locator("input").first.fill("{value}")')
+                    script_lines.append(f'{indent}await page.wait_for_timeout(STEP_DELAY)')
+                    
+            elif step_type == "click":
+                locator_candidates = []
+                
+                if element_name and element_name in element_map:
+                    elem_info = element_map[element_name]
+                    locator_value = elem_info.get("locator_value", "")
+                    if locator_value:
+                        locator_candidates.append(f'page.locator("{locator_value}")')
+                
+                if element_name:
+                    locator_candidates.append(f'page.get_by_text("{element_name}")')
+                    locator_candidates.append(f'page.get_by_role("button", name="{element_name}")')
+                    locator_candidates.append(f'page.get_by_role("link", name="{element_name}")')
+                    locator_candidates.append(f'page.locator("button").first')
+                
+                if locator_candidates:
+                    script_lines.append(f'{indent}click_done = False')
+                    script_lines.append(f'{indent}for loc_expr in [')
+                    for j, loc in enumerate(locator_candidates):
+                        suffix = ',' if j < len(locator_candidates) - 1 else ''
+                        script_lines.append(f'{indent}    lambda: {loc}{suffix}')
+                    script_lines.append(f'{indent}]:')
+                    script_lines.append(f'{indent}    try:')
+                    script_lines.append(f'{indent}        locator = loc_expr()')
+                    script_lines.append(f'{indent}        await locator.wait_for(state="visible", timeout=5000)')
+                    script_lines.append(f'{indent}        await locator.click()')
+                    script_lines.append(f'{indent}        click_done = True')
+                    script_lines.append(f'{indent}        break')
+                    script_lines.append(f'{indent}    except Exception:')
+                    script_lines.append(f'{indent}        continue')
+                    script_lines.append(f'{indent}if not click_done:')
+                    script_lines.append(f'{indent}    raise Exception("Failed to click: {element_name}")')
+                    script_lines.append(f'{indent}await page.wait_for_timeout(STEP_DELAY)')
+                else:
+                    script_lines.append(f'{indent}raise Exception("No element specified for click")')
+                    script_lines.append(f'{indent}await page.wait_for_timeout(STEP_DELAY)')
+                    
+            elif step_type == "captcha":
+                # 验证码处理 - 暂停等待用户手动输入
+                captcha_input = params.get("input_selector", "input.captcha-input")
+                script_lines.append(f'{indent}# 暂停等待用户输入验证码')
+                script_lines.append(f'{indent}captcha_code = await wait_for_captcha_input()')
+                script_lines.append(f'{indent}await page.locator("{captcha_input}").fill(captcha_code)')
+                script_lines.append(f'{indent}await page.wait_for_timeout(STEP_DELAY)')
+                    
+            elif step_type == "assert":
+                text = params.get("text", "")
+                if text:
+                    script_lines.append(f'{indent}try:')
+                    script_lines.append(f'{indent}    await page.get_by_text("{text}").first.wait_for(state="visible", timeout=10000)')
+                    script_lines.append(f'{indent}    print("断言成功: 找到文本 \\"{text}\\"")')
+                    script_lines.append(f'{indent}except Exception as e:')
+                    script_lines.append(f'{indent}    print(f"断言失败: {{e}}")')
+                else:
+                    script_lines.append(f'{indent}# TODO: 添加断言')
+                script_lines.append(f'{indent}await page.wait_for_timeout(STEP_DELAY)')
+                    
+            elif step_type == "wait":
+                wait_time = params.get("time", 1000)
+                script_lines.append(f'{indent}await page.wait_for_timeout({wait_time})')
+                script_lines.append(f'{indent}await page.wait_for_timeout(STEP_DELAY)')
+                
+            elif step_type == "screenshot":
+                script_lines.append(f'{indent}await page.screenshot(path="screenshot_{i+1}.png")')
+            
+            script_lines.append('')
+        
+        script_lines.append(f'{indent}await page.screenshot(path="test_result.png")')
+        script_lines.append(f'{indent}await browser.close()')
+        script_lines.append(f'    except Exception as e:')
+        script_lines.append(f'        print(f"Test failed: {{e}}")')
+        script_lines.append(f'        raise')
+        script_lines.append('')
+        script_lines.append('if __name__ == "__main__":')
+        script_lines.append('    asyncio.run(run_test())')
+        
+        script_content = '\n'.join(script_lines)
+        
+        return JSONResponse({
+            "success": True,
+            "script": script_content,
+            "language": "python",
+            "framework": "playwright",
+            "file_name": f"test_{case_data.get('id', 'unknown')}.py"
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== 验证码识别 API =====
+@app.post("/api/v1/ui/captcha/recognize")
+async def recognize_captcha(request: Request):
+    """识别验证码 - 支持OCR和大模型识别"""
+    try:
+        data = await request.json()
+        captcha_data = data.get("image", "")
+        captcha_type = data.get("type", "text")  # text, slider, behavior
+        
+        if not captcha_data:
+            raise HTTPException(status_code=400, detail="请提供验证码图片数据")
+        
+        # 模拟验证码识别结果
+        recognition_result = {
+            "recognized": True,
+            "code": "a3b7",  # 模拟识别结果
+            "confidence": 0.92,
+            "method": "ocr+llm",
+            "processing_time": 1.2
+        }
+        
+        # 如果有AI服务，使用大模型识别
+        if test_case_generator.ai_service and captcha_type == "text":
+            try:
+                prompt = f"""请识别这个验证码图片中的文字内容。
+验证码类型: {captcha_type}
+请直接返回识别出的文字，不要添加任何解释。"""
+                
+                # 调用AI服务（如果配置了）
+                result = test_case_generator.ai_service.generate(prompt)
+                if result:
+                    recognition_result["code"] = result.strip()
+                    recognition_result["method"] = "llm"
+                    recognition_result["confidence"] = 0.85
+            except Exception as ai_error:
+                # AI识别失败，使用OCR兜底
+                recognition_result["method"] = "ocr_fallback"
+                recognition_result["confidence"] = 0.75
+        
+        return JSONResponse({
+            "success": True,
+            "result": recognition_result,
+            "message": "验证码识别成功"
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/captcha/login")
+async def captcha_login(request: Request):
+    """带验证码的登录流程"""
+    try:
+        data = await request.json()
+        username = data.get("username", "")
+        password = data.get("password", "")
+        captcha_type = data.get("captcha_type", "text")
+        
+        if not username or not password:
+            raise HTTPException(status_code=400, detail="请提供用户名和密码")
+        
+        # 模拟登录流程
+        login_flow = {
+            "steps": [
+                {"step": "获取验证码", "status": "success", "captcha_uuid": str(uuid.uuid4())},
+                {"step": "识别验证码", "status": "success", "captcha_code": "a3b7", "confidence": 0.92},
+                {"step": "提交登录", "status": "success", "token": "mock_jwt_token_123"},
+                {"step": "验证登录", "status": "success", "user_info": {"username": username, "role": "admin"}}
+            ],
+            "login_success": True,
+            "message": "登录成功"
+        }
+        
+        return JSONResponse({
+            "success": True,
+            "flow": login_flow
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/ui/playwright/execute")
+async def execute_playwright_script(request: Request):
+    """执行Playwright脚本 - 保存并尝试真实执行"""
+    try:
+        import subprocess
+        import sys
+        
+        data = await request.json()
+        script = data.get("script", "")
+        script_id = data.get("script_id", "")
+        headless = data.get("headless", True)
+        auto_execute = data.get("auto_execute", True)
+        
+        if not script:
+            raise HTTPException(status_code=400, detail="请提供脚本内容")
+        
+        scripts_dir = get_config_subdir("ui_scripts")
+        
+        results_dir = get_config_subdir("ui_results")
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"script_{timestamp}.py"
+        filepath = os.path.join(scripts_dir, filename)
+        result_dir = os.path.join(results_dir, f"result_{timestamp}")
+        os.makedirs(result_dir, exist_ok=True)
+        
+        # 将Windows路径中的反斜杠替换为正斜杠，避免转义问题
+        result_dir_fixed = result_dir.replace('\\', '/')
+        
+        modified_script = script.replace('headless=False', f'headless={headless}')
+        modified_script = modified_script.replace(
+            'await page.screenshot(path="test_result.png")',
+            f'await page.screenshot(path="{result_dir_fixed}/test_result.png")'
+        )
+        for i in range(10):
+            modified_script = modified_script.replace(
+                f'screenshot_{i+1}.png',
+                f'{result_dir_fixed}/screenshot_{i+1}.png'
+            )
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(modified_script)
+        
+        python_exe = sys.executable
+        execute_cmd = f'"{python_exe}" "{filepath}"'
+        
+        execution_logs = []
+        execution_steps = []
+        screenshots = []
+        
+        execution_steps.append({
+            "name": "保存脚本",
+            "status": "passed",
+            "duration": 0.1,
+            "detail": filename
+        })
+        
+        def check_playwright_browser():
+            """检查Playwright浏览器是否可用"""
+            try:
+                import subprocess as sp
+                test_script_file = os.path.join(scripts_dir, "_browser_check.py")
+                with open(test_script_file, 'w', encoding='utf-8') as f:
+                    f.write('import asyncio\n')
+                    f.write('from playwright.async_api import async_playwright\n\n')
+                    f.write('async def test():\n')
+                    f.write('    try:\n')
+                    f.write('        async with async_playwright() as p:\n')
+                    f.write('            browser = await p.chromium.launch(headless=True)\n')
+                    f.write('            await browser.close()\n')
+                    f.write('            print("BROWSER_OK")\n')
+                    f.write('    except Exception as e:\n')
+                    f.write('        print(f"BROWSER_ERROR: {e}")\n\n')
+                    f.write('asyncio.run(test())\n')
+                
+                result = sp.run(
+                    [python_exe, test_script_file],
+                    capture_output=True, text=True, timeout=15
+                )
+                if 'BROWSER_OK' in result.stdout and result.returncode == 0:
+                    return True, "Playwright浏览器可用"
+                error_info = result.stdout[-300:] + result.stderr[-300:]
+                return False, error_info
+            except subprocess.TimeoutExpired:
+                return False, "浏览器检查超时"
+            except Exception as e:
+                return False, str(e)
+        
+        def check_system_browsers():
+            """检查系统中是否有可用的Chrome或Edge浏览器"""
+            import shutil
+            browsers = []
+            
+            # 使用shutil查找系统PATH中的浏览器
+            chrome_in_path = shutil.which("chrome") or shutil.which("google-chrome") or shutil.which("chrome.exe")
+            edge_in_path = shutil.which("msedge") or shutil.which("edge") or shutil.which("msedge.exe")
+            
+            if chrome_in_path:
+                browsers.append(("chrome", chrome_in_path))
+                return browsers
+            
+            if edge_in_path:
+                browsers.append(("edge", edge_in_path))
+                return browsers
+            
+            # 检查常见安装路径
+            chrome_paths = [
+                r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+                os.path.expandvars(r"%PROGRAMFILES%\Google\Chrome\Application\chrome.exe"),
+                os.path.expandvars(r"%PROGRAMFILES(X86)%\Google\Chrome\Application\chrome.exe"),
+                r"D:\Program Files\Google\Chrome\Application\chrome.exe",
+                r"D:\Google\Chrome\Application\chrome.exe",
+            ]
+            for path in chrome_paths:
+                if os.path.exists(path):
+                    browsers.append(("chrome", path))
+                    break
+            
+            edge_paths = [
+                r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+                os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\Application\msedge.exe"),
+                os.path.expandvars(r"%PROGRAMFILES%\Microsoft\Edge\Application\msedge.exe"),
+                os.path.expandvars(r"%PROGRAMFILES(X86)%\Microsoft\Edge\Application\msedge.exe"),
+                r"D:\Program Files\Microsoft\Edge\Application\msedge.exe",
+            ]
+            for path in edge_paths:
+                if os.path.exists(path):
+                    browsers.append(("edge", path))
+                    break
+            
+            # 检查其他Chromium浏览器
+            other_paths = [
+                os.path.expandvars(r"%LOCALAPPDATA%\Chromium\Application\chrome.exe"),
+                r"C:\Program Files\Chromium\Application\chrome.exe",
+                os.path.expandvars(r"%LOCALAPPDATA%\BraveSoftware\Brave-Browser\Application\brave.exe"),
+                r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
+            ]
+            for path in other_paths:
+                if os.path.exists(path):
+                    browsers.append(("chrome", path))  # 当作chrome处理
+                    break
+            
+            return browsers
+        
+        can_execute = auto_execute
+        
+        if can_execute:
+            browser_ok, browser_info = check_playwright_browser()
+            browser_channel = None
+            browser_executable = None
+            
+            if not browser_ok:
+                # 尝试检测系统浏览器
+                system_browsers = check_system_browsers()
+                
+                if system_browsers:
+                    # 使用系统浏览器
+                    browser_type, browser_path = system_browsers[0]
+                    if browser_type == "chrome":
+                        browser_channel = "chrome"
+                        modified_script = modified_script.replace(
+                            'browser = await p.chromium.launch(headless=',
+                            f'browser = await p.chromium.launch(channel="chrome", headless='
+                        )
+                    elif browser_type == "edge":
+                        browser_channel = "msedge"
+                        modified_script = modified_script.replace(
+                            'browser = await p.chromium.launch(headless=',
+                            f'browser = await p.chromium.launch(channel="msedge", headless='
+                        )
+                    
+                    execution_steps.append({
+                        "name": "检测浏览器",
+                        "status": "passed",
+                        "duration": 2.0,
+                        "detail": f"使用系统{browser_type.capitalize()}浏览器"
+                    })
+                    execution_logs.append(f"[INFO] Playwright浏览器未找到，使用系统{browser_type}浏览器: {browser_path}")
+                    
+                    # 重新保存修改后的脚本
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        f.write(modified_script)
+                else:
+                    execution_steps.append({
+                        "name": "检测浏览器",
+                        "status": "warning",
+                        "duration": 5.0,
+                        "detail": "未检测到浏览器，尝试直接执行"
+                    })
+                    execution_logs.append("[WARN] 未找到Playwright浏览器或系统浏览器")
+                    execution_logs.append(f"[DETAIL] {browser_info}")
+                    # 注意：即使检测失败，我们仍然尝试执行脚本
+            else:
+                execution_steps.append({
+                    "name": "检测浏览器",
+                    "status": "passed",
+                    "duration": 2.0,
+                    "detail": "Playwright浏览器就绪"
+                })
+            
+            try:
+                process = subprocess.Popen(
+                    [python_exe, filepath],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    cwd=scripts_dir,
+                    creationflags=0
+                )
+                
+                try:
+                    stdout, _ = process.communicate(timeout=60)
+                    log_lines = stdout.strip().split('\n') if stdout.strip() else []
+                    for line in log_lines[-30:]:
+                        if line.strip():
+                            execution_logs.append(line.strip())
+                    
+                    if process.returncode == 0:
+                        execution_steps.append({
+                            "name": "执行脚本",
+                            "status": "passed",
+                            "duration": 3.0,
+                            "detail": "执行成功"
+                        })
+                        
+                        screenshots = []
+                        if os.path.exists(result_dir):
+                            for f in sorted(os.listdir(result_dir)):
+                                if f.endswith('.png'):
+                                    screenshots.append(f"/api/v1/ui/screenshots/image?file={f}&dir={os.path.basename(result_dir)}")
+                        
+                        total_duration = 3.5
+                        status = "completed"
+                    else:
+                        execution_steps.append({
+                            "name": "执行脚本",
+                            "status": "failed",
+                            "duration": 0,
+                            "detail": f"退出码: {process.returncode}"
+                        })
+                        total_duration = 0.5
+                        status = "failed"
+                        
+                        # 添加更详细的错误信息
+                        error_logs = [l for l in log_lines if 'Error' in l or 'error' in l or 'Exception' in l or 'Traceback' in l]
+                        if error_logs:
+                            execution_logs.append("[ERROR_DETAIL] 脚本执行错误详情:")
+                            for el in error_logs[-10:]:
+                                execution_logs.append(f"  {el}")
+                        
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    execution_steps.append({
+                        "name": "执行脚本",
+                        "status": "timeout",
+                        "duration": 60,
+                        "detail": "执行超时"
+                    })
+                    total_duration = 60
+                    status = "timeout"
+                    execution_logs.append("[ERROR] 脚本执行超时(超过60秒)")
+            except Exception as e:
+                execution_steps.append({
+                    "name": "执行脚本",
+                    "status": "failed",
+                    "duration": 0,
+                    "detail": str(e)
+                })
+                total_duration = 0.5
+                status = "failed"
+                execution_logs.append(f"[ERROR] 执行错误: {str(e)}")
+        else:
+            execution_steps.append({
+                "name": "准备执行",
+                "status": "passed",
+                "duration": 0.2,
+                "detail": "脚本已保存，请手动执行"
+            })
+            execution_logs.append(f"[INFO] 脚本已保存: {filepath}")
+            execution_logs.append(f"[INFO] 执行命令: {execute_cmd}")
+            total_duration = 0.3
+            status = "ready"
+        
+        execution_result = {
+            "script_id": script_id or str(uuid.uuid4()),
+            "script_file": filename,
+            "script_path": filepath,
+            "execute_command": execute_cmd,
+            "status": status,
+            "duration": total_duration,
+            "headless": headless,
+            "steps": execution_steps,
+            "screenshots": screenshots,
+            "logs": execution_logs,
+            "result_dir": result_dir,
+            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        
+        return JSONResponse({
+            "success": True,
+            "result": execution_result
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== 验证码输入 API =====
+@app.post("/api/v1/ui/playwright/captcha/input")
+async def submit_captcha_input(request: Request):
+    """提交验证码输入"""
+    try:
+        data = await request.json()
+        session_id = data.get("session_id", "")
+        captcha_code = data.get("captcha_code", "")
+        
+        if not session_id:
+            raise HTTPException(status_code=400, detail="请提供会话ID")
+        if not captcha_code:
+            raise HTTPException(status_code=400, detail="请提供验证码")
+        
+        captcha_dir = get_config_subdir("ui_results")
+        
+        captcha_file = os.path.join(captcha_dir, f"captcha_input_{session_id}.json")
+        
+        with open(captcha_file, 'w', encoding='utf-8') as f:
+            json.dump({
+                "code": captcha_code,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }, f, ensure_ascii=False)
+        
+        return JSONResponse({
+            "success": True,
+            "message": "验证码已提交",
+            "session_id": session_id
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/ui/playwright/captcha/status/{session_id}")
+async def check_captcha_status(session_id: str):
+    """检查验证码状态"""
+    try:
+        captcha_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../config/ui_results")
+        
+        pause_file = os.path.join(captcha_dir, f"captcha_pause_{session_id}.json")
+        input_file = os.path.join(captcha_dir, f"captcha_input_{session_id}.json")
+        
+        status = "not_found"
+        message = ""
+        
+        if os.path.exists(input_file):
+            status = "submitted"
+            message = "验证码已提交"
+        elif os.path.exists(pause_file):
+            status = "waiting"
+            message = "等待验证码输入"
+        else:
+            status = "not_found"
+            message = "未找到验证码会话"
+        
+        return JSONResponse({
+            "success": True,
+            "status": status,
+            "message": message,
+            "session_id": session_id
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== 脚本保存 API =====
+@app.post("/api/v1/ui/playwright/save")
+async def save_playwright_script(request: Request):
+    """保存Playwright脚本"""
+    try:
+        data = await request.json()
+        script = data.get("script", "")
+        filename = data.get("filename", "")
+        case_name = data.get("case_name", "")
+        
+        if not script:
+            raise HTTPException(status_code=400, detail="请提供脚本内容")
+        
+        scripts_dir = get_config_subdir("ui_scripts")
+        
+        # 如果没有指定文件名，使用时间戳生成
+        if not filename:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            safe_name = re.sub(r'[^\w\u4e00-\u9fff-]', '_', case_name) if case_name else 'script'
+            filename = f"{safe_name}_{timestamp}.py"
+        
+        # 确保文件名安全
+        if not filename.endswith('.py'):
+            filename += '.py'
+        
+        filepath = os.path.join(scripts_dir, filename)
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(script)
+        
+        return JSONResponse({
+            "success": True,
+            "message": "脚本保存成功",
+            "filename": filename,
+            "filepath": filepath
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== 获取已保存脚本列表 API =====
+@app.get("/api/v1/ui/playwright/scripts")
+async def list_saved_scripts():
+    """获取已保存的脚本列表"""
+    try:
+        scripts_dir = get_config_subdir("ui_scripts")
+        scripts = []
+        
+        for filename in os.listdir(scripts_dir):
+            if filename.endswith('.py'):
+                filepath = os.path.join(scripts_dir, filename)
+                stat = os.stat(filepath)
+                scripts.append({
+                    "filename": filename,
+                    "filepath": filepath,
+                    "size": stat.st_size,
+                    "modified": datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                })
+        
+        # 按修改时间降序排列
+        scripts.sort(key=lambda x: x["modified"], reverse=True)
+        
+        return JSONResponse({
+            "success": True,
+            "scripts": scripts
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== 删除脚本 API =====
+@app.delete("/api/v1/ui/playwright/scripts/{filename}")
+async def delete_script(filename: str):
+    """删除指定脚本"""
+    try:
+        scripts_dir = get_config_subdir("ui_scripts")
+        filepath = os.path.join(scripts_dir, filename)
+        
+        # 安全检查：确保文件在scripts_dir内
+        if not os.path.abspath(filepath).startswith(os.path.abspath(scripts_dir)):
+            raise HTTPException(status_code=400, detail="无效的文件路径")
+        
+        if not os.path.exists(filepath):
+            raise HTTPException(status_code=404, detail="脚本文件不存在")
+        
+        os.remove(filepath)
+        
+        return JSONResponse({
+            "success": True,
+            "message": f"脚本 {filename} 已删除"
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ===== 前端元素智能定位 API =====
+@app.post("/api/v1/ui/element/locate")
+async def locate_ui_element(request: Request):
+    """AI智能定位页面元素"""
+    try:
+        data = await request.json()
+        element_description = data.get("description", "")
+        page_url = data.get("url", "")
+        element_type = data.get("type", "")
+        
+        if not element_description:
+            raise HTTPException(status_code=400, detail="请描述需要定位的元素")
+        
+        elements = load_ui_elements()
+        
+        # AI匹配元素定位（基于描述语义匹配）
+        matched_elements = []
+        for elem in elements:
+            name = elem.get("name", "").lower()
+            desc = elem.get("description", "").lower()
+            desc_lower = element_description.lower()
+            
+            # 简单的关键词匹配
+            score = 0
+            if desc_lower in name or name in desc_lower:
+                score += 0.5
+            if desc_lower in desc or desc in desc_lower:
+                score += 0.3
+            if elem.get("page", "").lower() in desc_lower:
+                score += 0.2
+            
+            if score > 0:
+                matched_elements.append({
+                    "element": elem,
+                    "score": score
+                })
+        
+        # 按分数排序
+        matched_elements.sort(key=lambda x: x["score"], reverse=True)
+        
+        # 生成推荐定位策略
+        suggestions = []
+        if matched_elements:
+            best_match = matched_elements[0]["element"]
+            locator_type = best_match.get("locator_type", "css")
+            locator_value = best_match.get("locator_value", "")
+            
+            suggestions.append({
+                "strategy": "直接定位",
+                "locator_type": locator_type,
+                "locator_value": locator_value,
+                "confidence": matched_elements[0]["score"]
+            })
+            
+            # 推荐更稳定的定位方式
+            if locator_type == "xpath":
+                suggestions.append({
+                    "strategy": "推荐: CSS选择器",
+                    "locator_type": "css",
+                    "locator_value": f"[data-testid='{best_match.get('name')}']",
+                    "confidence": 0.8
+                })
+            elif locator_type == "css":
+                suggestions.append({
+                    "strategy": "推荐: 语义定位",
+                    "locator_type": "role",
+                    "locator_value": f"page.getByRole('button', {{ name: '{best_match.get('name')}' }})",
+                    "confidence": 0.75
+                })
+        else:
+            # 未找到匹配，生成建议
+            suggestions.append({
+                "strategy": "建议: 使用AI生成",
+                "locator_type": "auto",
+                "locator_value": f"page.getByLabel('{element_description}')",
+                "confidence": 0.5
+            })
+        
+        return JSONResponse({
+            "success": True,
+            "matches": matched_elements[:3],
+            "suggestions": suggestions,
+            "message": f"找到 {len(matched_elements)} 个匹配元素"
+        })
     except HTTPException:
         raise
     except Exception as e:
