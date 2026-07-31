@@ -5869,6 +5869,7 @@ async def add_ui_case(request: Request):
             "description": data.get("description", ""),
             "url": data.get("url", ""),
             "steps": data.get("steps", []),
+            "script": data.get("script", ""),
             "status": data.get("status", "active"),
             "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M")
